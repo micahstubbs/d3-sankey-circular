@@ -26,12 +26,14 @@ import createsCycle from './createsCycle'
 import selectCircularLinkTypes from './selectCircularLinkTypes'
 import identifyCircles from './identifyCircles'
 
-// sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
+// sort links' breadth (ie top to bottom in a column),
+// based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
   return ascendingBreadth(a.source, b.source) || a.index - b.index
 }
 
-// sort links' breadth (ie top to bottom in a column), based on their target nodes' breadths
+// sort links' breadth (ie top to bottom in a column),
+// based on their target nodes' breadths
 function ascendingTargetBreadth(a, b) {
   return ascendingBreadth(a.target, b.target) || a.index - b.index
 }
@@ -78,7 +80,8 @@ function defaultLinks(graph) {
   return graph.links
 }
 
-// Return the node from the collection that matches the provided ID, or throw an error if no match
+// Return the node from the collection that matches the provided ID,
+// or throw an error if no match
 function find(nodeById, id) {
   var node = nodeById.get(id)
   if (!node) throw new Error('missing: ' + id)
@@ -90,7 +93,10 @@ function find(nodeById, id) {
 // Some constants for circular link calculations
 var verticalMargin = 25
 var baseRadius = 10
-var scale = 0.3 //Possibly let user control this, although anything over 0.5 starts to get too cramped
+
+//Possibly let user control this,
+// although anything over 0.5 starts to get too cramped
+var scale = 0.3
 
 export default function() {
   // Set the default values
@@ -122,7 +128,8 @@ export default function() {
     // 2.  Determine which links result in a circular path in the graph
     identifyCircles(graph, id)
 
-    // 4. Calculate the nodes' values, based on the values of the incoming and outgoing links
+    // 4. Calculate the nodes' values, based on the values
+    // of the incoming and outgoing links
     computeNodeValues(graph)
 
     // 5.  Calculate the nodes' depth based on the incoming and outgoing links
@@ -145,7 +152,8 @@ export default function() {
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
     // 8.  Adjust nodes that overlap links that span 2+ columns
 
-    var linkSortingIterations = 4 //Possibly let user control this number, like the iterations over node placement
+    //Possibly let user control this number, like the iterations over node placement
+    var linkSortingIterations = 4
     for (var iteration = 0; iteration < linkSortingIterations; iteration++) {
       sortSourceLinks(graph, y1, id)
       sortTargetLinks(graph, y1, id)
@@ -171,7 +179,8 @@ export default function() {
   } // end of sankeyCircular function
 
   // Set the sankeyCircular parameters
-  // nodeID, nodeAlign, nodeWidth, nodePadding, nodes, links, size, extent, iterations, nodePaddingRatio, circularLinkGap
+  // nodeID, nodeAlign, nodeWidth, nodePadding, nodes, links, size, extent,
+  // iterations, nodePaddingRatio, circularLinkGap
   sankeyCircular.nodeId = function(_) {
     return arguments.length
       ? ((id = typeof _ === 'function' ? _ : constant(_)), sankeyCircular)
@@ -494,8 +503,11 @@ export default function() {
       })
     }
 
-    // For each node in each column, check the node's vertical position in relation to its targets and sources vertical position
-    // and shift up/down to be closer to the vertical middle of those targets and sources
+    // For each node in each column,
+    // check the node's vertical position in relation to
+    // its target's and source's vertical position
+    // and shift up/down to be closer to
+    // the vertical middle of those targets and sources
     function relaxLeftAndRight(alpha, id) {
       var columnsLength = columns.length
 
@@ -623,7 +635,8 @@ export default function() {
 
 /// /////////////////////////////////////////////////////////////////////////////////
 // Cycle functions
-// portion of code to detect circular links based on Colin Fergus' bl.ock https://gist.github.com/cfergus/3956043
+// portion of code to detect circular links based on Colin Fergus'
+// bl.ock https://gist.github.com/cfergus/3956043
 
 /// ////////////////////////////////////////////////////////////////////////////
 
