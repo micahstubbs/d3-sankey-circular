@@ -781,6 +781,21 @@
     });
   }
 
+  // Return the number of circular links for node, not including self linking links
+  function numberOfNonSelfLinkingCycles(node, id) {
+    var sourceCount = 0;
+    node.sourceLinks.forEach(function (l) {
+      sourceCount = l.circular && !selfLinking(l, id) ? sourceCount + 1 : sourceCount;
+    });
+
+    var targetCount = 0;
+    node.targetLinks.forEach(function (l) {
+      targetCount = l.circular && !selfLinking(l, id) ? targetCount + 1 : targetCount;
+    });
+
+    return sourceCount + targetCount;
+  }
+
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -1426,21 +1441,6 @@
 
     // Exhausted all links
     return false;
-  }
-
-  // Return the number of circular links for node, not including self linking links
-  function numberOfNonSelfLinkingCycles(node, id) {
-    var sourceCount = 0;
-    node.sourceLinks.forEach(function (l) {
-      sourceCount = l.circular && !selfLinking(l, id) ? sourceCount + 1 : sourceCount;
-    });
-
-    var targetCount = 0;
-    node.targetLinks.forEach(function (l) {
-      targetCount = l.circular && !selfLinking(l, id) ? targetCount + 1 : targetCount;
-    });
-
-    return sourceCount + targetCount;
   }
 
   exports.sankeyCircular = sankeyCircular;

@@ -22,6 +22,7 @@ import ascendingBreadth from './ascendingBreadth'
 import findLinksOutward from './findLinksOutward'
 import sortSourceLinks from './sortSourceLinks'
 import resolveNodeLinkOverlaps from './resolveNodeLinkOverlaps'
+import numberOfNonSelfLinkingCycles from './numberOfNonSelfLinkingCycles'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -722,23 +723,6 @@ function createsCycle(originalSource, nodeToCheck, graph, id) {
 
   // Exhausted all links
   return false
-}
-
-// Return the number of circular links for node, not including self linking links
-function numberOfNonSelfLinkingCycles(node, id) {
-  var sourceCount = 0
-  node.sourceLinks.forEach(function(l) {
-    sourceCount =
-      l.circular && !selfLinking(l, id) ? sourceCount + 1 : sourceCount
-  })
-
-  var targetCount = 0
-  node.targetLinks.forEach(function(l) {
-    targetCount =
-      l.circular && !selfLinking(l, id) ? targetCount + 1 : targetCount
-  })
-
-  return sourceCount + targetCount
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
