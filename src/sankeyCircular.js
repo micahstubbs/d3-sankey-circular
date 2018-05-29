@@ -17,6 +17,7 @@ import linkXLength from './linkXLength'
 import createCircularPathString from './createCircularPathString'
 import addCircularPathData from './addCircularPathData'
 import selfLinking from './selfLinking'
+import adjustNodeHeight from './adjustNodeHeight'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -919,23 +920,6 @@ function nodesOverlap(nodeA, nodeB) {
   } else {
     return false
   }
-}
-
-// update a node, and its associated links, vertical positions (y0, y1)
-function adjustNodeHeight(node, dy, sankeyY0, sankeyY1) {
-  if (node.y0 + dy >= sankeyY0 && node.y1 + dy <= sankeyY1) {
-    node.y0 = node.y0 + dy
-    node.y1 = node.y1 + dy
-
-    node.targetLinks.forEach(function(l) {
-      l.y1 = l.y1 + dy
-    })
-
-    node.sourceLinks.forEach(function(l) {
-      l.y0 = l.y0 + dy
-    })
-  }
-  return node
 }
 
 // sort and set the links' y0 for each node
