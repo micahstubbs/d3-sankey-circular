@@ -24,6 +24,7 @@ import resolveNodeLinkOverlaps from './resolveNodeLinkOverlaps'
 import numberOfNonSelfLinkingCycles from './numberOfNonSelfLinkingCycles'
 import createsCycle from './createsCycle'
 import selectCircularLinkTypes from './selectCircularLinkTypes'
+import identifyCircles from './identifyCircles'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -623,22 +624,6 @@ export default function() {
 /// /////////////////////////////////////////////////////////////////////////////////
 // Cycle functions
 // portion of code to detect circular links based on Colin Fergus' bl.ock https://gist.github.com/cfergus/3956043
-
-// Identify circles in the link objects
-function identifyCircles(graph, id) {
-  var addedLinks = []
-  var circularLinkID = 0
-  graph.links.forEach(function(link) {
-    if (createsCycle(link.source, link.target, addedLinks, id)) {
-      link.circular = true
-      link.circularLinkID = circularLinkID
-      circularLinkID = circularLinkID + 1
-    } else {
-      link.circular = false
-      addedLinks.push(link)
-    }
-  })
-}
 
 /// ////////////////////////////////////////////////////////////////////////////
 

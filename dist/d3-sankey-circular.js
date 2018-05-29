@@ -876,6 +876,22 @@
     });
   }
 
+  // Identify circles in the link objects
+  function identifyCircles(graph, id) {
+    var addedLinks = [];
+    var circularLinkID = 0;
+    graph.links.forEach(function (link) {
+      if (createsCycle(link.source, link.target, addedLinks, id)) {
+        link.circular = true;
+        link.circularLinkID = circularLinkID;
+        circularLinkID = circularLinkID + 1;
+      } else {
+        link.circular = false;
+        addedLinks.push(link);
+      }
+    });
+  }
+
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -1421,26 +1437,6 @@
     }
 
     return sankeyCircular;
-  }
-
-  /// /////////////////////////////////////////////////////////////////////////////////
-  // Cycle functions
-  // portion of code to detect circular links based on Colin Fergus' bl.ock https://gist.github.com/cfergus/3956043
-
-  // Identify circles in the link objects
-  function identifyCircles(graph, id) {
-    var addedLinks = [];
-    var circularLinkID = 0;
-    graph.links.forEach(function (link) {
-      if (createsCycle(link.source, link.target, addedLinks, id)) {
-        link.circular = true;
-        link.circularLinkID = circularLinkID;
-        circularLinkID = circularLinkID + 1;
-      } else {
-        link.circular = false;
-        addedLinks.push(link);
-      }
-    });
   }
 
   exports.sankeyCircular = sankeyCircular;
