@@ -1,4 +1,4 @@
-// create a d path using the addCircularPathData
+// create a d path using the circularPathData
 export default function createCircularPathString(link) {
       var pathString = ''
       var pathData = {}
