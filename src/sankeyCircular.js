@@ -3,6 +3,7 @@
 // external imports
 import { ascending, min, max, mean, sum } from 'd3-array'
 import { map, nest } from 'd3-collection'
+import * as R from 'ramda'
 
 // project imports
 import constant from './constant'
@@ -115,7 +116,7 @@ export default function() {
     paddingRatio
 
   function sankeyCircular() {
-    var graph = {
+    let graph = {
       nodes: nodes.apply(null, arguments),
       links: links.apply(null, arguments)
     }
@@ -123,7 +124,7 @@ export default function() {
     // Process the graph's nodes and links, setting their positions
 
     // 1.  Associate the nodes with their respective links, and vice versa
-    computeNodeLinks(graph)
+    graph = computeNodeLinks(graph)
 
     // 2.  Determine which links result in a circular path in the graph
     identifyCircles(graph, id)
@@ -247,7 +248,8 @@ export default function() {
 
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
-  function computeNodeLinks(graph) {
+  function computeNodeLinks(inputGraph) {
+    const graph = R.clone(inputGraph)
     graph.nodes.forEach(function(node, i) {
       node.index = i
       node.sourceLinks = []
@@ -267,6 +269,7 @@ export default function() {
       source.sourceLinks.push(link)
       target.targetLinks.push(link)
     })
+    return graph
   }
 
   // Compute the value (size) and cycleness of each node by summing the associated links.

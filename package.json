@@ -14,7 +14,7 @@
     "d3-array": "^1.2.1",
     "d3-collection": "^1.0.4",
     "d3-shape": "^1.2.0",
-    "ramda": "^0.25.0"
+    "lodash.clonedeep": "^4.5.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

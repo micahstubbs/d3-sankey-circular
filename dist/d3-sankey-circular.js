@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-array'), require('d3-shape'), require('d3-collection')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'd3-array', 'd3-shape', 'd3-collection'], factory) :
-  (factory((global.sankeyCircular = {}),global.d3,global.d3,global.d3));
-}(this, (function (exports,d3Array,d3Shape,d3Collection) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-array'), require('d3-shape'), require('d3-collection'), require('ramda')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'd3-array', 'd3-shape', 'd3-collection', 'ramda'], factory) :
+  (factory((global.sankeyCircular = {}),global.d3,global.d3,global.d3,null));
+}(this, (function (exports,d3Array,d3Shape,d3Collection,ramda) { 'use strict';
 
   // returns a function, using the parameter given to the sankey setting
   function constant(x) {
@@ -900,12 +900,14 @@
 
   // https://github.com/tomshanley/d3-sankeyCircular-circular
 
-  // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
+  // sort links' breadth (ie top to bottom in a column),
+  // based on their source nodes' breadths
   function ascendingSourceBreadth(a, b) {
     return ascendingBreadth(a.source, b.source) || a.index - b.index;
   }
 
-  // sort links' breadth (ie top to bottom in a column), based on their target nodes' breadths
+  // sort links' breadth (ie top to bottom in a column),
+  // based on their target nodes' breadths
   function ascendingTargetBreadth(a, b) {
     return ascendingBreadth(a.target, b.target) || a.index - b.index;
   }
@@ -952,7 +954,8 @@
     return graph.links;
   }
 
-  // Return the node from the collection that matches the provided ID, or throw an error if no match
+  // Return the node from the collection that matches the provided ID,
+  // or throw an error if no match
   function find(nodeById, id) {
     var node = nodeById.get(id);
     if (!node) throw new Error('missing: ' + id);
@@ -964,7 +967,10 @@
   // Some constants for circular link calculations
   var verticalMargin = 25;
   var baseRadius = 10;
-  var scale = 0.3; //Possibly let user control this, although anything over 0.5 starts to get too cramped
+
+  //Possibly let user control this,
+  // although anything over 0.5 starts to get too cramped
+  var scale = 0.3;
 
   function sankeyCircular () {
     // Set the default values
@@ -993,12 +999,13 @@
         // Process the graph's nodes and links, setting their positions
 
         // 1.  Associate the nodes with their respective links, and vice versa
-      };computeNodeLinks(graph);
+      };graph = computeNodeLinks(graph);
 
       // 2.  Determine which links result in a circular path in the graph
       identifyCircles(graph, id);
 
-      // 4. Calculate the nodes' values, based on the values of the incoming and outgoing links
+      // 4. Calculate the nodes' values, based on the values
+      // of the incoming and outgoing links
       computeNodeValues(graph);
 
       // 5.  Calculate the nodes' depth based on the incoming and outgoing links
@@ -1021,7 +1028,8 @@
       // 7.  Sort links per node, based on the links' source/target nodes' breadths
       // 8.  Adjust nodes that overlap links that span 2+ columns
 
-      var linkSortingIterations = 4; //Possibly let user control this number, like the iterations over node placement
+      //Possibly let user control this number, like the iterations over node placement
+      var linkSortingIterations = 4;
       for (var iteration = 0; iteration < linkSortingIterations; iteration++) {
         sortSourceLinks(graph, y1, id);
         sortTargetLinks(graph, y1, id);
@@ -1040,7 +1048,8 @@
     } // end of sankeyCircular function
 
     // Set the sankeyCircular parameters
-    // nodeID, nodeAlign, nodeWidth, nodePadding, nodes, links, size, extent, iterations, nodePaddingRatio, circularLinkGap
+    // nodeID, nodeAlign, nodeWidth, nodePadding, nodes, links, size, extent,
+    // iterations, nodePaddingRatio, circularLinkGap
     sankeyCircular.nodeId = function (_) {
       return arguments.length ? (id = typeof _ === 'function' ? _ : constant(_), sankeyCircular) : id;
     };
@@ -1087,7 +1096,8 @@
 
     // Populate the sourceLinks and targetLinks for each node.
     // Also, if the source and target are not objects, assume they are indices.
-    function computeNodeLinks(graph) {
+    function computeNodeLinks(inputGraph) {
+      var graph = ramda.clone(inputGraph);
       graph.nodes.forEach(function (node, i) {
         node.index = i;
         node.sourceLinks = [];
@@ -1107,6 +1117,7 @@
         source.sourceLinks.push(link);
         target.targetLinks.push(link);
       });
+      return graph;
     }
 
     // Compute the value (size) and cycleness of each node by summing the associated links.
@@ -1316,8 +1327,11 @@
         });
       }
 
-      // For each node in each column, check the node's vertical position in relation to its targets and sources vertical position
-      // and shift up/down to be closer to the vertical middle of those targets and sources
+      // For each node in each column,
+      // check the node's vertical position in relation to
+      // its target's and source's vertical position
+      // and shift up/down to be closer to
+      // the vertical middle of those targets and sources
       function relaxLeftAndRight(alpha, id) {
         var columnsLength = columns.length;
 
