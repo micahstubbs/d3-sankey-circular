@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -61,7 +61,6 @@ exports.default = function () {
 
     var linkSortingIterations = 4; //Possibly let user control this number, like the iterations over node placement
     for (var iteration = 0; iteration < linkSortingIterations; iteration++) {
-
       sortSourceLinks(graph, y1, id);
       sortTargetLinks(graph, y1, id);
       resolveNodeLinkOverlaps(graph, y0, y1, id);
@@ -70,14 +69,13 @@ exports.default = function () {
     }
 
     // 8.1  Adjust node and link positions back to fill height of chart area if compressed
-    fillHeight(graph, y0, y1);
+    (0, _fillHeight2.default)(graph, y0, y1);
 
     // 9. Calculate visually appealling path for the circular paths, and create the "d" string
     addCircularPathData(graph, circularLinkGap, y1, id);
 
     return graph;
   } // end of sankeyCircular function
-
 
   // Set the sankeyCircular parameters
   // nodeID, nodeAlign, nodeWidth, nodePadding, nodes, links, size, extent, iterations, nodePaddingRatio, circularLinkGap
@@ -203,12 +201,16 @@ exports.default = function () {
     totalRightLinksWidth = totalRightLinksWidth > 0 ? totalRightLinksWidth + verticalMargin + baseRadius : totalRightLinksWidth;
     totalLeftLinksWidth = totalLeftLinksWidth > 0 ? totalLeftLinksWidth + verticalMargin + baseRadius : totalLeftLinksWidth;
 
-    return { "top": totalTopLinksWidth, "bottom": totalBottomLinksWidth, "left": totalLeftLinksWidth, "right": totalRightLinksWidth };
+    return {
+      top: totalTopLinksWidth,
+      bottom: totalBottomLinksWidth,
+      left: totalLeftLinksWidth,
+      right: totalRightLinksWidth
+    };
   }
 
   // Update the x0, y0, x1 and y1 for the sankeyCircular, to allow space for any circular links
   function scaleSankeySize(graph, margin) {
-
     var maxColumn = (0, _d3Array.max)(graph.nodes, function (node) {
       return node.column;
     });
@@ -287,7 +289,6 @@ exports.default = function () {
     }
 
     function initializeNodeBreadth(id) {
-
       //override py if nodePadding has been set
       if (paddingRatio) {
         var padding = Infinity;
@@ -476,28 +477,36 @@ exports.default = function () {
   return sankeyCircular;
 };
 
-var _d3Array = require("d3-array");
+var _d3Array = require('d3-array');
 
-var _d3Collection = require("d3-collection");
+var _d3Collection = require('d3-collection');
 
-var _align = require("./align");
+var _d3Shape = require('d3-shape');
 
-var _constant = require("./constant");
+var _align = require('./align');
+
+var _constant = require('./constant');
 
 var _constant2 = _interopRequireDefault(_constant);
 
-var _d3Shape = require("d3-shape");
+var _fillHeight = require('./fillHeight');
+
+var _fillHeight2 = _interopRequireDefault(_fillHeight);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
+// https://github.com/tomshanley/d3-sankeyCircular-circular
+// fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
+// third-party imports
 function ascendingSourceBreadth(a, b) {
   return ascendingBreadth(a.source, b.source) || a.index - b.index;
 }
 
 // sort links' breadth (ie top to bottom in a column), based on their target nodes' breadths
-// https://github.com/tomshanley/d3-sankeyCircular-circular
-// fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
+
+
+// project imports
 function ascendingTargetBreadth(a, b) {
   return ascendingBreadth(a.target, b.target) || a.index - b.index;
 }
@@ -538,12 +547,12 @@ function linkTargetCenter(link) {
 }
 
 /* function weightedSource (link) {
-  return nodeCenter(link.source) * link.value
-} */
+    return nodeCenter(link.source) * link.value
+  } */
 
 /* function weightedTarget (link) {
-  return nodeCenter(link.target) * link.value
-} */
+    return nodeCenter(link.target) * link.value
+  } */
 
 // Return the default value for ID for node, d.index
 function defaultId(d) {
@@ -645,7 +654,6 @@ function selectCircularLinkTypes(graph, id) {
 
 // Checks if link creates a cycle
 function createsCycle(originalSource, nodeToCheck, graph, id) {
-
   // Check for self linking nodes
   if (getNodeID(originalSource, id) == getNodeID(nodeToCheck, id)) {
     return true;
@@ -1052,7 +1060,6 @@ function linkPerpendicularYToLinkTarget(longerLink, shorterLink) {
 
 // Move any nodes that overlap links which span 2+ columns
 function resolveNodeLinkOverlaps(graph, y0, y1, id) {
-
   graph.links.forEach(function (link) {
     if (link.circular) {
       return;
@@ -1085,7 +1092,6 @@ function resolveNodeLinkOverlaps(graph, y0, y1, id) {
 
             // If top of link overlaps node, push node up
             if (linkY0AtColumn > node.y0 && linkY0AtColumn < node.y1) {
-
               var dy = node.y1 - linkY0AtColumn + 10;
               dy = node.circularLinkType == 'bottom' ? dy : -dy;
 
@@ -1377,52 +1383,12 @@ function selfLinking(link, id) {
   return getNodeID(link.source, id) == getNodeID(link.target, id);
 }
 
-function fillHeight(graph, y0, y1) {
-
-  var nodes = graph.nodes;
-  var links = graph.links;
-
-  var top = false;
-  var bottom = false;
-
-  links.forEach(function (link) {
-    if (link.circularLinkType == "top") {
-      top = true;
-    } else if (link.circularLinkType == "bottom") {
-      bottom = true;
-    }
-  });
-
-  if (top == false || bottom == false) {
-    var minY0 = (0, _d3Array.min)(nodes, function (node) {
-      return node.y0;
-    });
-    var maxY1 = (0, _d3Array.max)(nodes, function (node) {
-      return node.y1;
-    });
-    var currentHeight = maxY1 - minY0;
-    var chartHeight = y1 - y0;
-    var ratio = chartHeight / currentHeight;
-
-    nodes.forEach(function (node) {
-      var nodeHeight = (node.y1 - node.y0) * ratio;
-      node.y0 = (node.y0 - minY0) * ratio;
-      node.y1 = node.y0 + nodeHeight;
-    });
-
-    links.forEach(function (link) {
-      link.y0 = (link.y0 - minY0) * ratio;
-      link.y1 = (link.y1 - minY0) * ratio;
-      link.width = link.width * ratio;
-    });
-  }
-}
-
 /// ////////////////////////////////////////////////////////////////////////////
 
 /*exports.sankeyCircular = sankeyCircular
-exports.sankeyCenter = center
-exports.sankeyLeft = left
-exports.sankeyRight = right
-exports.sankeyJustify = justify
+  exports.sankeyCenter = center
+  exports.sankeyLeft = left
+  exports.sankeyRight = right
+  exports.sankeyJustify = justify
+
   Object.defineProperty(exports, '__esModule', { value: true })*/
