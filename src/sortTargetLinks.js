@@ -1,3 +1,7 @@
+import getNodeID from './getNodeID'
+import sameInclines from './sameInclines'
+import linkPerpendicularYToLinkSource from './linkPerpendicularYToLinkSource'
+
 // sort and set the links' y1 for each node
 export default function sortTargetLinks(graph, y1, id) {
   graph.nodes.forEach(function(node) {

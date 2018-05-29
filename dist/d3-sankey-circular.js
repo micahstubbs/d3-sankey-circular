@@ -4,6 +4,13 @@
   (factory((global.sankeyCircular = {}),global.d3,global.d3,global.d3));
 }(this, (function (exports,d3Array,d3Collection,d3Shape) { 'use strict';
 
+  // returns a function, using the parameter given to the sankey setting
+  function constant(x) {
+    return function () {
+      return x;
+    };
+  }
+
   // For a given link, return the target node's depth
   function targetDepth(d) {
     return d.target.depth;
@@ -29,11 +36,180 @@
     return node.targetLinks.length ? node.depth : node.sourceLinks.length ? d3Array.min(node.sourceLinks, targetDepth) - 1 : 0;
   }
 
-  // returns a function, using the parameter given to the sankey setting
-  function constant(x) {
-    return function () {
-      return x;
-    };
+  function fillHeight(graph, y0, y1) {
+    var nodes = graph.nodes;
+    var links = graph.links;
+
+    var top = false;
+    var bottom = false;
+
+    links.forEach(function (link) {
+      if (link.circularLinkType == 'top') {
+        top = true;
+      } else if (link.circularLinkType == 'bottom') {
+        bottom = true;
+      }
+    });
+
+    if (top == false || bottom == false) {
+      var minY0 = min(nodes, function (node) {
+        return node.y0;
+      });
+      var maxY1 = max(nodes, function (node) {
+        return node.y1;
+      });
+      var currentHeight = maxY1 - minY0;
+      var chartHeight = y1 - y0;
+      var ratio = chartHeight / currentHeight;
+
+      nodes.forEach(function (node) {
+        var nodeHeight = (node.y1 - node.y0) * ratio;
+        node.y0 = (node.y0 - minY0) * ratio;
+        node.y1 = node.y0 + nodeHeight;
+      });
+
+      links.forEach(function (link) {
+        link.y0 = (link.y0 - minY0) * ratio;
+        link.y1 = (link.y1 - minY0) * ratio;
+        link.width = link.width * ratio;
+      });
+    }
+  }
+
+  function getNodeID(node, id) {
+    return id(node);
+  }
+
+  // returns the slope of a link, from source to target
+  // up => slopes up from source to target
+  // down => slopes down from source to target
+  function incline(link) {
+    return link.y0 - link.y1 > 0 ? 'up' : 'down';
+  }
+
+  // test if links both slope up, or both slope down
+  function sameInclines(link1, link2) {
+    return incline(link1) == incline(link2);
+  }
+
+  // Return the angle between a straight line between
+  // the source and target of the link,
+  // and the vertical plane of the node
+  function linkAngle(link) {
+    var adjacent = Math.abs(link.y1 - link.y0);
+    var opposite = Math.abs(link.target.x0 - link.source.x1);
+
+    return Math.atan(opposite / adjacent);
+  }
+
+  // return the distance between the link's target and source node, in terms of the nodes' X coordinate
+  function linkXLength(link) {
+    return link.target.x0 - link.source.x1;
+  }
+
+  // Return the Y coordinate on the longerLink path * which is perpendicular shorterLink's source.
+  // * approx, based on a straight line from target to source, when in fact the path is a bezier
+  function linkPerpendicularYToLinkSource(longerLink, shorterLink) {
+    // get the angle for the longer link
+    var angle = linkAngle(longerLink);
+
+    // get the adjacent length to the other link's x position
+    var heightFromY1ToPependicular = linkXLength(shorterLink) / Math.tan(angle);
+
+    // add or subtract from longer link1's original y1, depending on the slope
+    var yPerpendicular = incline(longerLink) == 'up' ? longerLink.y1 + heightFromY1ToPependicular : longerLink.y1 - heightFromY1ToPependicular;
+
+    return yPerpendicular;
+  }
+
+  // sort and set the links' y1 for each node
+  function sortTargetLinks(graph, y1, id) {
+    graph.nodes.forEach(function (node) {
+      var nodesTargetLinks = graph.links.filter(function (l) {
+        return getNodeID(l.target, id) == getNodeID(node, id);
+      });
+
+      var nodesTargetLinksLength = nodesTargetLinks.length;
+
+      if (nodesTargetLinksLength > 1) {
+        nodesTargetLinks.sort(function (link1, link2) {
+          // if both are not circular, the base on the source y position
+          if (!link1.circular && !link2.circular) {
+            if (link1.source.column == link2.source.column) {
+              return link1.y0 - link2.y0;
+            } else if (!sameInclines(link1, link2)) {
+              return link1.y0 - link2.y0;
+            } else {
+              // get the angle of the link to the further source node (ie the smaller column)
+              if (link2.source.column < link1.source.column) {
+                var link2Adj = linkPerpendicularYToLinkSource(link2, link1);
+
+                return link1.y0 - link2Adj;
+              }
+              if (link1.source.column < link2.source.column) {
+                var link1Adj = linkPerpendicularYToLinkSource(link1, link2);
+
+                return link1Adj - link2.y0;
+              }
+            }
+          }
+
+          // if only one is circular, the move top links up, or bottom links down
+          if (link1.circular && !link2.circular) {
+            return link1.circularLinkType == 'top' ? -1 : 1;
+          } else if (link2.circular && !link1.circular) {
+            return link2.circularLinkType == 'top' ? 1 : -1;
+          }
+
+          // if both links are circular...
+          if (link1.circular && link2.circular) {
+            // ...and they both loop the same way (both top)
+            if (link1.circularLinkType === link2.circularLinkType && link1.circularLinkType == 'top') {
+              // ...and they both connect to a target with same column, then sort by the target's y
+              if (link1.source.column === link2.source.column) {
+                return link1.source.y1 - link2.source.y1;
+              } else {
+                // ...and they connect to different column targets, then sort by how far back they
+                return link1.source.column - link2.source.column;
+              }
+            } else if (link1.circularLinkType === link2.circularLinkType && link1.circularLinkType == 'bottom') {
+              // ...and they both loop the same way (both bottom)
+              // ...and they both connect to a target with same column, then sort by the target's y
+              if (link1.source.column === link2.source.column) {
+                return link1.source.y1 - link2.source.y1;
+              } else {
+                // ...and they connect to different column targets, then sort by how far back they
+                return link2.source.column - link1.source.column;
+              }
+            } else {
+              // ...and they loop around different ways, the move top up and bottom down
+              return link1.circularLinkType == 'top' ? -1 : 1;
+            }
+          }
+        });
+      }
+
+      // update y1 for links
+      var yTargetOffset = node.y0;
+
+      nodesTargetLinks.forEach(function (link) {
+        link.y1 = yTargetOffset + link.width / 2;
+        yTargetOffset = yTargetOffset + link.width;
+      });
+
+      // correct any circular bottom links so they are at the bottom of the node
+      nodesTargetLinks.forEach(function (link, i) {
+        if (link.circularLinkType == 'bottom') {
+          var j = i + 1;
+          var offsetFromBottom = 0;
+          // sum the widths of any links that are below this link
+          for (j; j < nodesTargetLinksLength; j++) {
+            offsetFromBottom = offsetFromBottom + nodesTargetLinks[j].width;
+          }
+          link.y1 = node.y1 - offsetFromBottom - link.width / 2;
+        }
+      });
+    });
   }
 
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -83,7 +259,6 @@
   function linkSourceCenter(link) {
     return nodeCenter(link.source);
   }
-
   // return the vertical center of a link's target node
   function linkTargetCenter(link) {
     return nodeCenter(link.target);
@@ -117,10 +292,6 @@
     var node = nodeById.get(id);
     if (!node) throw new Error('missing: ' + id);
     return node;
-  }
-
-  function getNodeID(node, id) {
-    return id(node);
   }
 
   // The main sankeyCircular functions
@@ -716,14 +887,6 @@
     return children;
   }
 
-  // Return the angle between a straight line between the source and target of the link, and the vertical plane of the node
-  function linkAngle(link) {
-    var adjacent = Math.abs(link.y1 - link.y0);
-    var opposite = Math.abs(link.target.x0 - link.source.x1);
-
-    return Math.atan(opposite / adjacent);
-  }
-
   // Check if two circular links potentially overlap
   function circularLinksCross(link1, link2) {
     if (link1.source.column < link2.target.column) {
@@ -1038,26 +1201,6 @@
     return link.target.column - link.source.column;
   }
 
-  // return the distance between the link's target and source node, in terms of the nodes' X coordinate
-  function linkXLength(link) {
-    return link.target.x0 - link.source.x1;
-  }
-
-  // Return the Y coordinate on the longerLink path * which is perpendicular shorterLink's source.
-  // * approx, based on a straight line from target to source, when in fact the path is a bezier
-  function linkPerpendicularYToLinkSource(longerLink, shorterLink) {
-    // get the angle for the longer link
-    var angle = linkAngle(longerLink);
-
-    // get the adjacent length to the other link's x position
-    var heightFromY1ToPependicular = linkXLength(shorterLink) / Math.tan(angle);
-
-    // add or subtract from longer link1's original y1, depending on the slope
-    var yPerpendicular = incline(longerLink) == 'up' ? longerLink.y1 + heightFromY1ToPependicular : longerLink.y1 - heightFromY1ToPependicular;
-
-    return yPerpendicular;
-  }
-
   // Return the Y coordinate on the longerLink path * which is perpendicular shorterLink's source.
   // * approx, based on a straight line from target to source, when in fact the path is a bezier
   function linkPerpendicularYToLinkTarget(longerLink, shorterLink) {
@@ -1291,151 +1434,9 @@
     });
   }
 
-  // sort and set the links' y1 for each node
-  function sortTargetLinks(graph, y1, id) {
-    graph.nodes.forEach(function (node) {
-      var nodesTargetLinks = graph.links.filter(function (l) {
-        return getNodeID(l.target, id) == getNodeID(node, id);
-      });
-
-      var nodesTargetLinksLength = nodesTargetLinks.length;
-
-      if (nodesTargetLinksLength > 1) {
-        nodesTargetLinks.sort(function (link1, link2) {
-          // if both are not circular, the base on the source y position
-          if (!link1.circular && !link2.circular) {
-            if (link1.source.column == link2.source.column) {
-              return link1.y0 - link2.y0;
-            } else if (!sameInclines(link1, link2)) {
-              return link1.y0 - link2.y0;
-            } else {
-              // get the angle of the link to the further source node (ie the smaller column)
-              if (link2.source.column < link1.source.column) {
-                var link2Adj = linkPerpendicularYToLinkSource(link2, link1);
-
-                return link1.y0 - link2Adj;
-              }
-              if (link1.source.column < link2.source.column) {
-                var link1Adj = linkPerpendicularYToLinkSource(link1, link2);
-
-                return link1Adj - link2.y0;
-              }
-            }
-          }
-
-          // if only one is circular, the move top links up, or bottom links down
-          if (link1.circular && !link2.circular) {
-            return link1.circularLinkType == 'top' ? -1 : 1;
-          } else if (link2.circular && !link1.circular) {
-            return link2.circularLinkType == 'top' ? 1 : -1;
-          }
-
-          // if both links are circular...
-          if (link1.circular && link2.circular) {
-            // ...and they both loop the same way (both top)
-            if (link1.circularLinkType === link2.circularLinkType && link1.circularLinkType == 'top') {
-              // ...and they both connect to a target with same column, then sort by the target's y
-              if (link1.source.column === link2.source.column) {
-                return link1.source.y1 - link2.source.y1;
-              } else {
-                // ...and they connect to different column targets, then sort by how far back they
-                return link1.source.column - link2.source.column;
-              }
-            } else if (link1.circularLinkType === link2.circularLinkType && link1.circularLinkType == 'bottom') {
-              // ...and they both loop the same way (both bottom)
-              // ...and they both connect to a target with same column, then sort by the target's y
-              if (link1.source.column === link2.source.column) {
-                return link1.source.y1 - link2.source.y1;
-              } else {
-                // ...and they connect to different column targets, then sort by how far back they
-                return link2.source.column - link1.source.column;
-              }
-            } else {
-              // ...and they loop around different ways, the move top up and bottom down
-              return link1.circularLinkType == 'top' ? -1 : 1;
-            }
-          }
-        });
-      }
-
-      // update y1 for links
-      var yTargetOffset = node.y0;
-
-      nodesTargetLinks.forEach(function (link) {
-        link.y1 = yTargetOffset + link.width / 2;
-        yTargetOffset = yTargetOffset + link.width;
-      });
-
-      // correct any circular bottom links so they are at the bottom of the node
-      nodesTargetLinks.forEach(function (link, i) {
-        if (link.circularLinkType == 'bottom') {
-          var j = i + 1;
-          var offsetFromBottom = 0;
-          // sum the widths of any links that are below this link
-          for (j; j < nodesTargetLinksLength; j++) {
-            offsetFromBottom = offsetFromBottom + nodesTargetLinks[j].width;
-          }
-          link.y1 = node.y1 - offsetFromBottom - link.width / 2;
-        }
-      });
-    });
-  }
-
-  // test if links both slope up, or both slope down
-  function sameInclines(link1, link2) {
-    return incline(link1) == incline(link2);
-  }
-
-  // returns the slope of a link, from source to target
-  // up => slopes up from source to target
-  // down => slopes down from source to target
-  function incline(link) {
-    return link.y0 - link.y1 > 0 ? 'up' : 'down';
-  }
-
   // check if link is self linking, ie links a node to the same node
   function selfLinking(link, id) {
     return getNodeID(link.source, id) == getNodeID(link.target, id);
-  }
-
-  function fillHeight(graph, y0, y1) {
-    var nodes = graph.nodes;
-    var links = graph.links;
-
-    var top = false;
-    var bottom = false;
-
-    links.forEach(function (link) {
-      if (link.circularLinkType == 'top') {
-        top = true;
-      } else if (link.circularLinkType == 'bottom') {
-        bottom = true;
-      }
-    });
-
-    if (top == false || bottom == false) {
-      var minY0 = d3Array.min(nodes, function (node) {
-        return node.y0;
-      });
-      var maxY1 = d3Array.max(nodes, function (node) {
-        return node.y1;
-      });
-      var currentHeight = maxY1 - minY0;
-      var chartHeight = y1 - y0;
-      var ratio = chartHeight / currentHeight;
-
-      nodes.forEach(function (node) {
-        var nodeHeight = (node.y1 - node.y0) * ratio;
-        node.y0 = (node.y0 - minY0) * ratio;
-        node.y1 = node.y0 + nodeHeight;
-      });
-
-      links.forEach(function (link) {
-        link.y0 = (link.y0 - minY0) * ratio;
-        link.y1 = (link.y1 - minY0) * ratio;
-        link.width = link.width * ratio;
-      });
-    }
   }
 
   exports.sankeyCircular = sankeyCircular;
