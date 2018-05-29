@@ -546,19 +546,6 @@ function ascendingBreadth(a, b) {
   }
 }
 
-// Given a node, find all links for which this is a source in the current 'known' graph
-function findLinksOutward(node, graph) {
-  var children = [];
-
-  for (var i = 0; i < graph.length; i++) {
-    if (node == graph[i].source) {
-      children.push(graph[i]);
-    }
-  }
-
-  return children;
-}
-
 // Return the Y coordinate on the longerLink path *
 // which is perpendicular shorterLink's source.
 //
@@ -792,6 +779,54 @@ function numberOfNonSelfLinkingCycles(node, id) {
   });
 
   return sourceCount + targetCount;
+}
+
+// Given a node, find all links for which this is a source in the current 'known' graph
+function findLinksOutward(node, graph) {
+  var children = [];
+
+  for (var i = 0; i < graph.length; i++) {
+    if (node == graph[i].source) {
+      children.push(graph[i]);
+    }
+  }
+
+  return children;
+}
+
+// Checks if link creates a cycle
+function createsCycle(originalSource, nodeToCheck, graph, id) {
+  // Check for self linking nodes
+  if (getNodeID(originalSource, id) == getNodeID(nodeToCheck, id)) {
+    return true;
+  }
+
+  if (graph.length == 0) {
+    return false;
+  }
+
+  var nextLinks = findLinksOutward(nodeToCheck, graph);
+  // leaf node check
+  if (nextLinks.length == 0) {
+    return false;
+  }
+
+  // cycle check
+  for (var i = 0; i < nextLinks.length; i++) {
+    var nextLink = nextLinks[i];
+
+    if (nextLink.target === originalSource) {
+      return true;
+    }
+
+    // Recurse
+    if (createsCycle(originalSource, nextLink.target, graph, id)) {
+      return true;
+    }
+  }
+
+  // Exhausted all links
+  return false;
 }
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
@@ -1404,41 +1439,6 @@ function selectCircularLinkTypes(graph, id) {
       }
     }
   });
-}
-
-// Checks if link creates a cycle
-function createsCycle(originalSource, nodeToCheck, graph, id) {
-  // Check for self linking nodes
-  if (getNodeID(originalSource, id) == getNodeID(nodeToCheck, id)) {
-    return true;
-  }
-
-  if (graph.length == 0) {
-    return false;
-  }
-
-  var nextLinks = findLinksOutward(nodeToCheck, graph);
-  // leaf node check
-  if (nextLinks.length == 0) {
-    return false;
-  }
-
-  // cycle check
-  for (var i = 0; i < nextLinks.length; i++) {
-    var nextLink = nextLinks[i];
-
-    if (nextLink.target === originalSource) {
-      return true;
-    }
-
-    // Recurse
-    if (createsCycle(originalSource, nextLink.target, graph, id)) {
-      return true;
-    }
-  }
-
-  // Exhausted all links
-  return false;
 }
 
 export { sankeyCircular, center as sankeyCenter, left as sankeyLeft, right as sankeyRight, justify as sankeyJustify };
