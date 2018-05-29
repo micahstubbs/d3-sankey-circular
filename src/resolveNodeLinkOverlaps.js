@@ -1,3 +1,7 @@
+import adjustNodeHeight from './adjustNodeHeight'
+import getNodeID from './getNodeID'
+import nodesOverlap from './nodesOverlap'
+
 // Move any nodes that overlap links which span 2+ columns
 export default function resolveNodeLinkOverlaps(graph, y0, y1, id) {
   graph.links.forEach(function(link) {

@@ -17,11 +17,11 @@ import linkXLength from './linkXLength'
 import createCircularPathString from './createCircularPathString'
 import addCircularPathData from './addCircularPathData'
 import selfLinking from './selfLinking'
-import adjustNodeHeight from './adjustNodeHeight'
 import nodesOverlap from './nodesOverlap'
 import ascendingBreadth from './ascendingBreadth'
 import findLinksOutward from './findLinksOutward'
 import sortSourceLinks from './sortSourceLinks'
+import resolveNodeLinkOverlaps from './resolveNodeLinkOverlaps'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -739,27 +739,6 @@ function numberOfNonSelfLinkingCycles(node, id) {
   })
 
   return sourceCount + targetCount
-}
-
-// Check if a circular link is the only circular link for both its source and target node
-function onlyCircularLink(link) {
-  var nodeSourceLinks = link.source.sourceLinks
-  var sourceCount = 0
-  nodeSourceLinks.forEach(function(l) {
-    sourceCount = l.circular ? sourceCount + 1 : sourceCount
-  })
-
-  var nodeTargetLinks = link.target.targetLinks
-  var targetCount = 0
-  nodeTargetLinks.forEach(function(l) {
-    targetCount = l.circular ? targetCount + 1 : targetCount
-  })
-
-  if (sourceCount > 1 || targetCount > 1) {
-    return false
-  } else {
-    return true
-  }
 }
 
 /// ////////////////////////////////////////////////////////////////////////////

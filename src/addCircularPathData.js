@@ -8,6 +8,7 @@ import sortLinkTargetYDescending from './sortLinkTargetYDescending'
 import createCircularPathString from './createCircularPathString'
 import sortLinkSourceYAscending from './sortLinkSourceYAscending'
 import sortLinkTargetYAscending from './sortLinkTargetYAscending'
+import onlyCircularLink from './onlyCircularLink'
 
 // calculate the optimum path for a link to reduce overlaps
 export default function addCircularPathData(

@@ -1,6 +1,7 @@
 import sortLinkColumnAscending from './sortLinkColumnAscending'
 import selfLinking from './selfLinking'
 import circularLinksCross from './circularLinksCross'
+import onlyCircularLink from './onlyCircularLink'
 
 // creates vertical buffer values per set of top/bottom links
 export default function calcVerticalBuffer(links, circularLinkGap, id) {
