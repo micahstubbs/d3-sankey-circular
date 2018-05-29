@@ -1,14 +1,10 @@
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
-// third-party imports
 import { ascending, min, max, mean, sum } from 'd3-array'
 import { map, nest } from 'd3-collection'
-import { linkHorizontal } from 'd3-shape'
-
-// project imports
 import { justify } from './align'
 import constant from './constant'
-import fillHeight from './fillHeight'
+import { linkHorizontal } from 'd3-shape'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -1497,6 +1493,102 @@ function sortSourceLinks(graph, y1, id) {
   })
 }
 
+// sort and set the links' y1 for each node
+function sortTargetLinks(graph, y1, id) {
+  graph.nodes.forEach(function(node) {
+    var nodesTargetLinks = graph.links.filter(function(l) {
+      return getNodeID(l.target, id) == getNodeID(node, id)
+    })
+
+    var nodesTargetLinksLength = nodesTargetLinks.length
+
+    if (nodesTargetLinksLength > 1) {
+      nodesTargetLinks.sort(function(link1, link2) {
+        // if both are not circular, the base on the source y position
+        if (!link1.circular && !link2.circular) {
+          if (link1.source.column == link2.source.column) {
+            return link1.y0 - link2.y0
+          } else if (!sameInclines(link1, link2)) {
+            return link1.y0 - link2.y0
+          } else {
+            // get the angle of the link to the further source node (ie the smaller column)
+            if (link2.source.column < link1.source.column) {
+              var link2Adj = linkPerpendicularYToLinkSource(link2, link1)
+
+              return link1.y0 - link2Adj
+            }
+            if (link1.source.column < link2.source.column) {
+              var link1Adj = linkPerpendicularYToLinkSource(link1, link2)
+
+              return link1Adj - link2.y0
+            }
+          }
+        }
+
+        // if only one is circular, the move top links up, or bottom links down
+        if (link1.circular && !link2.circular) {
+          return link1.circularLinkType == 'top' ? -1 : 1
+        } else if (link2.circular && !link1.circular) {
+          return link2.circularLinkType == 'top' ? 1 : -1
+        }
+
+        // if both links are circular...
+        if (link1.circular && link2.circular) {
+          // ...and they both loop the same way (both top)
+          if (
+            link1.circularLinkType === link2.circularLinkType &&
+            link1.circularLinkType == 'top'
+          ) {
+            // ...and they both connect to a target with same column, then sort by the target's y
+            if (link1.source.column === link2.source.column) {
+              return link1.source.y1 - link2.source.y1
+            } else {
+              // ...and they connect to different column targets, then sort by how far back they
+              return link1.source.column - link2.source.column
+            }
+          } else if (
+            link1.circularLinkType === link2.circularLinkType &&
+            link1.circularLinkType == 'bottom'
+          ) {
+            // ...and they both loop the same way (both bottom)
+            // ...and they both connect to a target with same column, then sort by the target's y
+            if (link1.source.column === link2.source.column) {
+              return link1.source.y1 - link2.source.y1
+            } else {
+              // ...and they connect to different column targets, then sort by how far back they
+              return link2.source.column - link1.source.column
+            }
+          } else {
+            // ...and they loop around different ways, the move top up and bottom down
+            return link1.circularLinkType == 'top' ? -1 : 1
+          }
+        }
+      })
+    }
+
+    // update y1 for links
+    var yTargetOffset = node.y0
+
+    nodesTargetLinks.forEach(function(link) {
+      link.y1 = yTargetOffset + link.width / 2
+      yTargetOffset = yTargetOffset + link.width
+    })
+
+    // correct any circular bottom links so they are at the bottom of the node
+    nodesTargetLinks.forEach(function(link, i) {
+      if (link.circularLinkType == 'bottom') {
+        var j = i + 1
+        var offsetFromBottom = 0
+        // sum the widths of any links that are below this link
+        for (j; j < nodesTargetLinksLength; j++) {
+          offsetFromBottom = offsetFromBottom + nodesTargetLinks[j].width
+        }
+        link.y1 = node.y1 - offsetFromBottom - link.width / 2
+      }
+    })
+  })
+}
+
 // test if links both slope up, or both slope down
 function sameInclines(link1, link2) {
   return incline(link1) == incline(link2)
@@ -1512,6 +1604,46 @@ function incline(link) {
 // check if link is self linking, ie links a node to the same node
 function selfLinking(link, id) {
   return getNodeID(link.source, id) == getNodeID(link.target, id)
+}
+
+function fillHeight(graph, y0, y1) {
+  var nodes = graph.nodes
+  var links = graph.links
+
+  var top = false
+  var bottom = false
+
+  links.forEach(function(link) {
+    if (link.circularLinkType == 'top') {
+      top = true
+    } else if (link.circularLinkType == 'bottom') {
+      bottom = true
+    }
+  })
+
+  if (top == false || bottom == false) {
+    var minY0 = min(nodes, function(node) {
+      return node.y0
+    })
+    var maxY1 = max(nodes, function(node) {
+      return node.y1
+    })
+    var currentHeight = maxY1 - minY0
+    var chartHeight = y1 - y0
+    var ratio = chartHeight / currentHeight
+
+    nodes.forEach(function(node) {
+      var nodeHeight = (node.y1 - node.y0) * ratio
+      node.y0 = (node.y0 - minY0) * ratio
+      node.y1 = node.y0 + nodeHeight
+    })
+
+    links.forEach(function(link) {
+      link.y0 = (link.y0 - minY0) * ratio
+      link.y1 = (link.y1 - minY0) * ratio
+      link.width = link.width * ratio
+    })
+  }
 }
 
 /// ////////////////////////////////////////////////////////////////////////////
