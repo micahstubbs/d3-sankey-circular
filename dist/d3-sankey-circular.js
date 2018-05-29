@@ -544,6 +544,19 @@
     }
   }
 
+  // Given a node, find all links for which this is a source in the current 'known' graph
+  function findLinksOutward(node, graph) {
+    var children = [];
+
+    for (var i = 0; i < graph.length; i++) {
+      if (node == graph[i].source) {
+        children.push(graph[i]);
+      }
+    }
+
+    return children;
+  }
+
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -1189,19 +1202,6 @@
 
     // Exhausted all links
     return false;
-  }
-
-  // Given a node, find all links for which this is a source in the current 'known' graph
-  function findLinksOutward(node, graph) {
-    var children = [];
-
-    for (var i = 0; i < graph.length; i++) {
-      if (node == graph[i].source) {
-        children.push(graph[i]);
-      }
-    }
-
-    return children;
   }
 
   // Return the number of circular links for node, not including self linking links

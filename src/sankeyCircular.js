@@ -20,6 +20,7 @@ import selfLinking from './selfLinking'
 import adjustNodeHeight from './adjustNodeHeight'
 import nodesOverlap from './nodesOverlap'
 import ascendingBreadth from './ascendingBreadth'
+import findLinksOutward from './findLinksOutward'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -720,19 +721,6 @@ function createsCycle(originalSource, nodeToCheck, graph, id) {
 
   // Exhausted all links
   return false
-}
-
-// Given a node, find all links for which this is a source in the current 'known' graph
-function findLinksOutward(node, graph) {
-  var children = []
-
-  for (var i = 0; i < graph.length; i++) {
-    if (node == graph[i].source) {
-      children.push(graph[i])
-    }
-  }
-
-  return children
 }
 
 // Return the number of circular links for node, not including self linking links
