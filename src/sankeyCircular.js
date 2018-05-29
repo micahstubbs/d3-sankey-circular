@@ -19,6 +19,7 @@ import addCircularPathData from './addCircularPathData'
 import selfLinking from './selfLinking'
 import adjustNodeHeight from './adjustNodeHeight'
 import nodesOverlap from './nodesOverlap'
+import ascendingBreadth from './ascendingBreadth'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -28,21 +29,6 @@ function ascendingSourceBreadth(a, b) {
 // sort links' breadth (ie top to bottom in a column), based on their target nodes' breadths
 function ascendingTargetBreadth(a, b) {
   return ascendingBreadth(a.target, b.target) || a.index - b.index
-}
-
-// sort nodes' breadth (ie top to bottom in a column)
-// if both nodes have circular links, or both don't have circular links, then sort by the top (y0) of the node
-// else push nodes that have top circular links to the top, and nodes that have bottom circular links to the bottom
-function ascendingBreadth(a, b) {
-  if (a.partOfCycle === b.partOfCycle) {
-    return a.y0 - b.y0
-  } else {
-    if (a.circularLinkType === 'top' || b.circularLinkType === 'bottom') {
-      return -1
-    } else {
-      return 1
-    }
-  }
 }
 
 // return the value of a node or link
