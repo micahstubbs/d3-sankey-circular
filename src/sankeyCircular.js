@@ -18,6 +18,7 @@ import createCircularPathString from './createCircularPathString'
 import addCircularPathData from './addCircularPathData'
 import selfLinking from './selfLinking'
 import adjustNodeHeight from './adjustNodeHeight'
+import nodesOverlap from './nodesOverlap'
 
 // sort links' breadth (ie top to bottom in a column), based on their source nodes' breadths
 function ascendingSourceBreadth(a, b) {
@@ -904,22 +905,6 @@ function resolveNodeLinkOverlaps(graph, y0, y1, id) {
       }
     }
   })
-}
-
-// check if two nodes overlap
-function nodesOverlap(nodeA, nodeB) {
-  // test if nodeA top partially overlaps nodeB
-  if (nodeA.y0 > nodeB.y0 && nodeA.y0 < nodeB.y1) {
-    return true
-  } else if (nodeA.y1 > nodeB.y0 && nodeA.y1 < nodeB.y1) {
-    // test if nodeA bottom partially overlaps nodeB
-    return true
-  } else if (nodeA.y0 < nodeB.y0 && nodeA.y1 > nodeB.y1) {
-    // test if nodeA covers nodeB
-    return true
-  } else {
-    return false
-  }
 }
 
 // sort and set the links' y0 for each node
