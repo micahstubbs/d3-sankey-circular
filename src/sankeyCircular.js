@@ -3,7 +3,7 @@
 // external imports
 import { ascending, min, max, mean, sum } from 'd3-array'
 import { map, nest } from 'd3-collection'
-import * as R from 'ramda'
+import cloneDeep from 'lodash/cloneDeep'
 
 // project imports
 import constant from './constant'
@@ -249,7 +249,7 @@ export default function() {
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
   function computeNodeLinks(inputGraph) {
-    const graph = R.clone(inputGraph)
+    const graph = cloneDeep(inputGraph)
     graph.nodes.forEach(function(node, i) {
       node.index = i
       node.sourceLinks = []

@@ -1,7 +1,7 @@
 import { min as min$1, ascending, max as max$1, mean, sum } from 'd3-array';
 import { linkHorizontal } from 'd3-shape';
 import { map, nest } from 'd3-collection';
-import { clone } from 'ramda';
+import cloneDeep from 'lodash/cloneDeep';
 
 // returns a function, using the parameter given to the sankey setting
 function constant(x) {
@@ -1096,7 +1096,8 @@ function sankeyCircular () {
   // Populate the sourceLinks and targetLinks for each node.
   // Also, if the source and target are not objects, assume they are indices.
   function computeNodeLinks(inputGraph) {
-    var graph = clone(inputGraph);
+    console.log('cloneDeep', cloneDeep);
+    var graph = cloneDeep(inputGraph);
     graph.nodes.forEach(function (node, i) {
       node.index = i;
       node.sourceLinks = [];
