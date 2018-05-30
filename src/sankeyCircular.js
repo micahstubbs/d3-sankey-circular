@@ -138,7 +138,7 @@ export default function() {
     // 3.  Determine how the circular links will be drawn,
     //     either travelling back above the main chart ("top")
     //     or below the main chart ("bottom")
-    selectCircularLinkTypes(graph, id)
+    graph = selectCircularLinkTypes(graph, id)
 
     // 6.  Calculate the nodes' and links' vertical position within their respective column
     //     Also readjusts sankeyCircular size if circular links are needed, and node x's

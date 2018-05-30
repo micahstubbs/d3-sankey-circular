@@ -833,7 +833,8 @@ function createsCycle(originalSource, nodeToCheck, graph, id) {
 // Assign a circular link type (top or bottom), based on:
 // - if the source/target node already has circular links, then use the same type
 // - if not, choose the type with fewer links
-function selectCircularLinkTypes(graph, id) {
+function selectCircularLinkTypes(inputGraph, id) {
+  var graph = cloneDeep(inputGraph);
   var numberOfTops = 0;
   var numberOfBottoms = 0;
   graph.links.forEach(function (link) {
@@ -873,6 +874,7 @@ function selectCircularLinkTypes(graph, id) {
       }
     }
   });
+  return graph;
 }
 
 // Identify circles in the link objects
@@ -1104,7 +1106,7 @@ function sankeyCircular () {
     // 3.  Determine how the circular links will be drawn,
     //     either travelling back above the main chart ("top")
     //     or below the main chart ("bottom")
-    selectCircularLinkTypes(graph, id);
+    graph = selectCircularLinkTypes(graph, id);
 
     // 6.  Calculate the nodes' and links' vertical position within their respective column
     //     Also readjusts sankeyCircular size if circular links are needed, and node x's

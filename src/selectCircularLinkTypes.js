@@ -1,10 +1,13 @@
+import cloneDeep from 'lodash/cloneDeep'
+
 import getNodeID from './getNodeID'
 import selfLinking from './selfLinking'
 
 // Assign a circular link type (top or bottom), based on:
 // - if the source/target node already has circular links, then use the same type
 // - if not, choose the type with fewer links
-export default function selectCircularLinkTypes(graph, id) {
+export default function selectCircularLinkTypes(inputGraph, id) {
+  const graph = cloneDeep(inputGraph)
   var numberOfTops = 0
   var numberOfBottoms = 0
   graph.links.forEach(function(link) {
@@ -50,4 +53,5 @@ export default function selectCircularLinkTypes(graph, id) {
       }
     }
   })
+  return graph
 }
