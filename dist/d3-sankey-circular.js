@@ -3376,6 +3376,41 @@
     });
   }
 
+  // Return the node from the collection that matches the provided ID,
+  // or throw an error if no match
+  function find(nodeById, id) {
+    var node = nodeById.get(id);
+    if (!node) throw new Error('missing: ' + id);
+    return node;
+  }
+
+  // Populate the sourceLinks and targetLinks for each node.
+  // Also, if the source and target are not objects, assume they are indices.
+  function computeNodeLinks(inputGraph, id) {
+    var graph = cloneDeep_1(inputGraph);
+    graph.nodes.forEach(function (node, i) {
+      node.index = i;
+      node.sourceLinks = [];
+      node.targetLinks = [];
+    });
+    var nodeById = d3Collection.map(graph.nodes, id);
+    graph.links.forEach(function (link, i) {
+      link.index = i;
+      var source = link.source;
+      var target = link.target;
+      if ((typeof source === 'undefined' ? 'undefined' : _typeof(source)) !== 'object') {
+        source = link.source = find(nodeById, source);
+      }
+      if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object') {
+        target = link.target = find(nodeById, target);
+      }
+      console.log('source from computeNodeLinks', source);
+      source.sourceLinks.push(link);
+      target.targetLinks.push(link);
+    });
+    return graph;
+  }
+
   // https://github.com/tomshanley/d3-sankeyCircular-circular
 
   // sort links' breadth (ie top to bottom in a column),
@@ -3432,14 +3467,6 @@
     return graph.links;
   }
 
-  // Return the node from the collection that matches the provided ID,
-  // or throw an error if no match
-  function find(nodeById, id) {
-    var node = nodeById.get(id);
-    if (!node) throw new Error('missing: ' + id);
-    return node;
-  }
-
   // The main sankeyCircular functions
 
   // Some constants for circular link calculations
@@ -3477,7 +3504,7 @@
         // Process the graph's nodes and links, setting their positions
 
         // 1.  Associate the nodes with their respective links, and vice versa
-      };graph = computeNodeLinks(graph);
+      };graph = computeNodeLinks(graph, id);
 
       // 2.  Determine which links result in a circular path in the graph
       identifyCircles(graph, id);
@@ -3571,33 +3598,6 @@
     sankeyCircular.nodePaddingRatio = function (_) {
       return arguments.length ? (paddingRatio = +_, sankeyCircular) : paddingRatio;
     };
-
-    // Populate the sourceLinks and targetLinks for each node.
-    // Also, if the source and target are not objects, assume they are indices.
-    function computeNodeLinks(inputGraph) {
-      console.log('cloneDeep', cloneDeep_1);
-      var graph = cloneDeep_1(inputGraph);
-      graph.nodes.forEach(function (node, i) {
-        node.index = i;
-        node.sourceLinks = [];
-        node.targetLinks = [];
-      });
-      var nodeById = d3Collection.map(graph.nodes, id);
-      graph.links.forEach(function (link, i) {
-        link.index = i;
-        var source = link.source;
-        var target = link.target;
-        if ((typeof source === 'undefined' ? 'undefined' : _typeof(source)) !== 'object') {
-          source = link.source = find(nodeById, source);
-        }
-        if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object') {
-          target = link.target = find(nodeById, target);
-        }
-        source.sourceLinks.push(link);
-        target.targetLinks.push(link);
-      });
-      return graph;
-    }
 
     // Compute the value (size) and cycleness of each node by summing the associated links.
     function computeNodeValues(graph) {
@@ -3931,6 +3931,21 @@
 
     return sankeyCircular;
   }
+
+  /// /////////////////////////////////////////////////////////////////////////////////
+  // Cycle functions
+  // portion of code to detect circular links based on Colin Fergus'
+  // bl.ock https://gist.github.com/cfergus/3956043
+
+  /// ////////////////////////////////////////////////////////////////////////////
+
+  /*exports.sankeyCircular = sankeyCircular
+    exports.sankeyCenter = center
+    exports.sankeyLeft = left
+    exports.sankeyRight = right
+    exports.sankeyJustify = justify
+
+    Object.defineProperty(exports, '__esModule', { value: true })*/
 
   exports.sankeyCircular = sankeyCircular;
   exports.sankeyCenter = center;

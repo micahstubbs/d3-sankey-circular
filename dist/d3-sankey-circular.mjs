@@ -1,7 +1,7 @@
 import { min as min$1, ascending, max as max$1, mean, sum } from 'd3-array';
 import { linkHorizontal } from 'd3-shape';
-import { map, nest } from 'd3-collection';
 import cloneDeep from 'lodash/cloneDeep';
+import { map, nest } from 'd3-collection';
 
 // returns a function, using the parameter given to the sankey setting
 function constant(x) {
@@ -891,11 +891,46 @@ function identifyCircles(graph, id) {
   });
 }
 
+// Return the node from the collection that matches the provided ID,
+// or throw an error if no match
+function find(nodeById, id) {
+  var node = nodeById.get(id);
+  if (!node) throw new Error('missing: ' + id);
+  return node;
+}
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
   return typeof obj;
 } : function (obj) {
   return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
 };
+
+// Populate the sourceLinks and targetLinks for each node.
+// Also, if the source and target are not objects, assume they are indices.
+function computeNodeLinks(inputGraph, id) {
+  var graph = cloneDeep(inputGraph);
+  graph.nodes.forEach(function (node, i) {
+    node.index = i;
+    node.sourceLinks = [];
+    node.targetLinks = [];
+  });
+  var nodeById = map(graph.nodes, id);
+  graph.links.forEach(function (link, i) {
+    link.index = i;
+    var source = link.source;
+    var target = link.target;
+    if ((typeof source === 'undefined' ? 'undefined' : _typeof(source)) !== 'object') {
+      source = link.source = find(nodeById, source);
+    }
+    if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object') {
+      target = link.target = find(nodeById, target);
+    }
+    console.log('source from computeNodeLinks', source);
+    source.sourceLinks.push(link);
+    target.targetLinks.push(link);
+  });
+  return graph;
+}
 
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 
@@ -953,14 +988,6 @@ function defaultLinks(graph) {
   return graph.links;
 }
 
-// Return the node from the collection that matches the provided ID,
-// or throw an error if no match
-function find(nodeById, id) {
-  var node = nodeById.get(id);
-  if (!node) throw new Error('missing: ' + id);
-  return node;
-}
-
 // The main sankeyCircular functions
 
 // Some constants for circular link calculations
@@ -998,7 +1025,7 @@ function sankeyCircular () {
       // Process the graph's nodes and links, setting their positions
 
       // 1.  Associate the nodes with their respective links, and vice versa
-    };graph = computeNodeLinks(graph);
+    };graph = computeNodeLinks(graph, id);
 
     // 2.  Determine which links result in a circular path in the graph
     identifyCircles(graph, id);
@@ -1092,33 +1119,6 @@ function sankeyCircular () {
   sankeyCircular.nodePaddingRatio = function (_) {
     return arguments.length ? (paddingRatio = +_, sankeyCircular) : paddingRatio;
   };
-
-  // Populate the sourceLinks and targetLinks for each node.
-  // Also, if the source and target are not objects, assume they are indices.
-  function computeNodeLinks(inputGraph) {
-    console.log('cloneDeep', cloneDeep);
-    var graph = cloneDeep(inputGraph);
-    graph.nodes.forEach(function (node, i) {
-      node.index = i;
-      node.sourceLinks = [];
-      node.targetLinks = [];
-    });
-    var nodeById = map(graph.nodes, id);
-    graph.links.forEach(function (link, i) {
-      link.index = i;
-      var source = link.source;
-      var target = link.target;
-      if ((typeof source === 'undefined' ? 'undefined' : _typeof(source)) !== 'object') {
-        source = link.source = find(nodeById, source);
-      }
-      if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object') {
-        target = link.target = find(nodeById, target);
-      }
-      source.sourceLinks.push(link);
-      target.targetLinks.push(link);
-    });
-    return graph;
-  }
 
   // Compute the value (size) and cycleness of each node by summing the associated links.
   function computeNodeValues(graph) {
@@ -1452,5 +1452,20 @@ y = node.y0 -= dy, node.y1 -= dy;
 
   return sankeyCircular;
 }
+
+/// /////////////////////////////////////////////////////////////////////////////////
+// Cycle functions
+// portion of code to detect circular links based on Colin Fergus'
+// bl.ock https://gist.github.com/cfergus/3956043
+
+/// ////////////////////////////////////////////////////////////////////////////
+
+/*exports.sankeyCircular = sankeyCircular
+  exports.sankeyCenter = center
+  exports.sankeyLeft = left
+  exports.sankeyRight = right
+  exports.sankeyJustify = justify
+
+  Object.defineProperty(exports, '__esModule', { value: true })*/
 
 export { sankeyCircular, center as sankeyCenter, left as sankeyLeft, right as sankeyRight, justify as sankeyJustify };
