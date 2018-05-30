@@ -876,7 +876,8 @@ function selectCircularLinkTypes(graph, id) {
 }
 
 // Identify circles in the link objects
-function identifyCircles(graph, id) {
+function identifyCircles(inputGraph, id) {
+  var graph = cloneDeep(inputGraph);
   var addedLinks = [];
   var circularLinkID = 0;
   graph.links.forEach(function (link) {
@@ -889,6 +890,7 @@ function identifyCircles(graph, id) {
       addedLinks.push(link);
     }
   });
+  return graph;
 }
 
 // Return the node from the collection that matches the provided ID,
@@ -925,7 +927,6 @@ function computeNodeLinks(inputGraph, id) {
     if ((typeof target === 'undefined' ? 'undefined' : _typeof(target)) !== 'object') {
       target = link.target = find(nodeById, target);
     }
-    console.log('source from computeNodeLinks', source);
     source.sourceLinks.push(link);
     target.targetLinks.push(link);
   });
@@ -1028,7 +1029,7 @@ function sankeyCircular () {
     };graph = computeNodeLinks(graph, id);
 
     // 2.  Determine which links result in a circular path in the graph
-    identifyCircles(graph, id);
+    graph = identifyCircles(graph, id);
 
     // 4. Calculate the nodes' values, based on the values
     // of the incoming and outgoing links

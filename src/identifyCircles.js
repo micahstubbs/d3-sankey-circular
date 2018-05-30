@@ -1,7 +1,10 @@
+import cloneDeep from 'lodash/cloneDeep'
+
 import createsCycle from './createsCycle'
 
 // Identify circles in the link objects
-export default function identifyCircles(graph, id) {
+export default function identifyCircles(inputGraph, id) {
+  const graph = cloneDeep(inputGraph)
   var addedLinks = []
   var circularLinkID = 0
   graph.links.forEach(function(link) {
@@ -14,4 +17,5 @@ export default function identifyCircles(graph, id) {
       addedLinks.push(link)
     }
   })
+  return graph
 }

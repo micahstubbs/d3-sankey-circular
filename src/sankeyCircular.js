@@ -120,7 +120,7 @@ export default function() {
     graph = computeNodeLinks(graph, id)
 
     // 2.  Determine which links result in a circular path in the graph
-    identifyCircles(graph, id)
+    graph = identifyCircles(graph, id)
 
     // 4. Calculate the nodes' values, based on the values
     // of the incoming and outgoing links
