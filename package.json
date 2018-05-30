@@ -8,7 +8,7 @@
     "build-node": "babel src --out-dir dist",
     "clean": "rimraf dist && mkdirp dist",
     "dev": "rollup -c -w",
-    "build": "npm run clean && rollup -c",
+    "build": "rollup -c",
     "prepare": "npm run build"
   },
   "repository": {
