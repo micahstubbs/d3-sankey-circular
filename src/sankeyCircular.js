@@ -27,6 +27,7 @@ import createsCycle from './createsCycle'
 import selectCircularLinkTypes from './selectCircularLinkTypes'
 import identifyCircles from './identifyCircles'
 import computeNodeLinks from './computeNodeLinks'
+import computeNodeValues from './computeNodeValues'
 
 // sort links' breadth (ie top to bottom in a column),
 // based on their source nodes' breadths
@@ -124,7 +125,7 @@ export default function() {
 
     // 4. Calculate the nodes' values, based on the values
     // of the incoming and outgoing links
-    computeNodeValues(graph)
+    graph = computeNodeValues(graph, value)
 
     // 5.  Calculate the nodes' depth based on the incoming and outgoing links
     //     Sets the nodes':
@@ -237,29 +238,6 @@ export default function() {
     return arguments.length
       ? ((paddingRatio = +_), sankeyCircular)
       : paddingRatio
-  }
-
-  // Compute the value (size) and cycleness of each node by summing the associated links.
-  function computeNodeValues(graph) {
-    graph.nodes.forEach(function(node) {
-      node.partOfCycle = false
-      node.value = Math.max(
-        sum(node.sourceLinks, value),
-        sum(node.targetLinks, value)
-      )
-      node.sourceLinks.forEach(function(link) {
-        if (link.circular) {
-          node.partOfCycle = true
-          node.circularLinkType = link.circularLinkType
-        }
-      })
-      node.targetLinks.forEach(function(link) {
-        if (link.circular) {
-          node.partOfCycle = true
-          node.circularLinkType = link.circularLinkType
-        }
-      })
-    })
   }
 
   function getCircleMargins(graph) {

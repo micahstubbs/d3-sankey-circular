@@ -1,4 +1,4 @@
-import { min as min$1, ascending, max as max$1, mean, sum } from 'd3-array';
+import { min as min$1, sum, ascending, max as max$1, mean } from 'd3-array';
 import { linkHorizontal } from 'd3-shape';
 import cloneDeep from 'lodash/cloneDeep';
 import { map, nest } from 'd3-collection';
@@ -933,6 +933,28 @@ function computeNodeLinks(inputGraph, id) {
   return graph;
 }
 
+// Compute the value (size) and cycleness of each node by summing the associated links.
+function computeNodeValues(inputGraph, value) {
+  var graph = cloneDeep(inputGraph);
+  graph.nodes.forEach(function (node) {
+    node.partOfCycle = false;
+    node.value = Math.max(sum(node.sourceLinks, value), sum(node.targetLinks, value));
+    node.sourceLinks.forEach(function (link) {
+      if (link.circular) {
+        node.partOfCycle = true;
+        node.circularLinkType = link.circularLinkType;
+      }
+    });
+    node.targetLinks.forEach(function (link) {
+      if (link.circular) {
+        node.partOfCycle = true;
+        node.circularLinkType = link.circularLinkType;
+      }
+    });
+  });
+  return graph;
+}
+
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 
 // sort links' breadth (ie top to bottom in a column),
@@ -1033,7 +1055,7 @@ function sankeyCircular () {
 
     // 4. Calculate the nodes' values, based on the values
     // of the incoming and outgoing links
-    computeNodeValues(graph);
+    graph = computeNodeValues(graph, value);
 
     // 5.  Calculate the nodes' depth based on the incoming and outgoing links
     //     Sets the nodes':
@@ -1120,26 +1142,6 @@ function sankeyCircular () {
   sankeyCircular.nodePaddingRatio = function (_) {
     return arguments.length ? (paddingRatio = +_, sankeyCircular) : paddingRatio;
   };
-
-  // Compute the value (size) and cycleness of each node by summing the associated links.
-  function computeNodeValues(graph) {
-    graph.nodes.forEach(function (node) {
-      node.partOfCycle = false;
-      node.value = Math.max(sum(node.sourceLinks, value), sum(node.targetLinks, value));
-      node.sourceLinks.forEach(function (link) {
-        if (link.circular) {
-          node.partOfCycle = true;
-          node.circularLinkType = link.circularLinkType;
-        }
-      });
-      node.targetLinks.forEach(function (link) {
-        if (link.circular) {
-          node.partOfCycle = true;
-          node.circularLinkType = link.circularLinkType;
-        }
-      });
-    });
-  }
 
   function getCircleMargins(graph) {
     var totalTopLinksWidth = 0,
