@@ -955,6 +955,43 @@ function computeNodeValues(inputGraph, value) {
   return graph;
 }
 
+// Iteratively assign the depth for each node.
+// Nodes are assigned the maximum depth of incoming neighbors plus one;
+// nodes with no incoming links are assigned depth zero, while
+// nodes with no outgoing links are assigned the maximum depth.
+function computeNodeDepths(inputGraph, align) {
+  var graph = cloneDeep(inputGraph);
+  var nodes, next, x;
+
+  for (nodes = graph.nodes, next = [], x = 0; nodes.length; ++x, nodes = next, next = []) {
+    nodes.forEach(function (node) {
+      node.depth = x;
+      node.sourceLinks.forEach(function (link) {
+        if (next.indexOf(link.target) < 0 && !link.circular) {
+          next.push(link.target);
+        }
+      });
+    });
+  }
+
+  for (nodes = graph.nodes, next = [], x = 0; nodes.length; ++x, nodes = next, next = []) {
+    nodes.forEach(function (node) {
+      node.height = x;
+      node.targetLinks.forEach(function (link) {
+        if (next.indexOf(link.source) < 0 && !link.circular) {
+          next.push(link.source);
+        }
+      });
+    });
+  }
+
+  // assign column numbers, and get max value
+  graph.nodes.forEach(function (node) {
+    node.column = Math.floor(align.call(null, node, x));
+  });
+  return graph;
+}
+
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 
 // sort links' breadth (ie top to bottom in a column),
@@ -1062,7 +1099,7 @@ function sankeyCircular () {
     //     - depth:  the depth in the graph
     //     - column: the depth (0, 1, 2, etc), as is relates to visual position from left to right
     //     - x0, x1: the x coordinates, as is relates to visual position from left to right
-    computeNodeDepths(graph);
+    graph = computeNodeDepths(graph, align);
 
     // 3.  Determine how the circular links will be drawn,
     //     either travelling back above the main chart ("top")
@@ -1211,41 +1248,6 @@ function sankeyCircular () {
     });
 
     return scaleY;
-  }
-
-  // Iteratively assign the depth for each node.
-  // Nodes are assigned the maximum depth of incoming neighbors plus one;
-  // nodes with no incoming links are assigned depth zero, while
-  // nodes with no outgoing links are assigned the maximum depth.
-  function computeNodeDepths(graph) {
-    var nodes, next, x;
-
-    for (nodes = graph.nodes, next = [], x = 0; nodes.length; ++x, nodes = next, next = []) {
-      nodes.forEach(function (node) {
-        node.depth = x;
-        node.sourceLinks.forEach(function (link) {
-          if (next.indexOf(link.target) < 0 && !link.circular) {
-            next.push(link.target);
-          }
-        });
-      });
-    }
-
-    for (nodes = graph.nodes, next = [], x = 0; nodes.length; ++x, nodes = next, next = []) {
-      nodes.forEach(function (node) {
-        node.height = x;
-        node.targetLinks.forEach(function (link) {
-          if (next.indexOf(link.source) < 0 && !link.circular) {
-            next.push(link.source);
-          }
-        });
-      });
-    }
-
-    // assign column numbers, and get max value
-    graph.nodes.forEach(function (node) {
-      node.column = Math.floor(align.call(null, node, x));
-    });
   }
 
   // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
