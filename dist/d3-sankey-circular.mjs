@@ -2704,6 +2704,54 @@ function ascendingBreadth(a, b) {
   }
 }
 
+// sort links' breadth (ie top to bottom in a column),
+// based on their source nodes' breadths
+function ascendingSourceBreadth(a, b) {
+  return ascendingBreadth(a.source, b.source) || a.index - b.index;
+}
+
+// sort links' breadth (ie top to bottom in a column),
+// based on their target nodes' breadths
+function ascendingTargetBreadth(a, b) {
+  return ascendingBreadth(a.target, b.target) || a.index - b.index;
+}
+
+// Assign the links y0 and y1 based on source/target nodes position,
+// plus the link's relative position to other links to the same node
+function computeLinkBreadths(graph) {
+  graph.nodes.forEach(function (node) {
+    node.sourceLinks.sort(ascendingTargetBreadth);
+    node.targetLinks.sort(ascendingSourceBreadth);
+  });
+  graph.nodes.forEach(function (node) {
+    var y0 = node.y0;
+    var y1 = y0;
+
+    // start from the bottom of the node for cycle links
+    var y0cycle = node.y1;
+    var y1cycle = y0cycle;
+
+    node.sourceLinks.forEach(function (link) {
+      if (link.circular) {
+        link.y0 = y0cycle - link.width / 2;
+        y0cycle = y0cycle - link.width;
+      } else {
+        link.y0 = y0 + link.width / 2;
+        y0 += link.width;
+      }
+    });
+    node.targetLinks.forEach(function (link) {
+      if (link.circular) {
+        link.y1 = y1cycle - link.width / 2;
+        y1cycle = y1cycle - link.width;
+      } else {
+        link.y1 = y1 + link.width / 2;
+        y1 += link.width;
+      }
+    });
+  });
+}
+
 // For each column, check if nodes are overlapping, and if so, shift up/down
 function resolveCollisions(columns, y0, y1, py) {
   columns.forEach(function (nodes) {
@@ -2974,52 +3022,39 @@ function initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1,
   };
 }
 
-// sort links' breadth (ie top to bottom in a column),
-// based on their source nodes' breadths
-function ascendingSourceBreadth(a, b) {
-  return ascendingBreadth(a.source, b.source) || a.index - b.index;
-}
-
-// sort links' breadth (ie top to bottom in a column),
-// based on their target nodes' breadths
-function ascendingTargetBreadth(a, b) {
-  return ascendingBreadth(a.target, b.target) || a.index - b.index;
-}
-
-// Assign the links y0 and y1 based on source/target nodes position,
-// plus the link's relative position to other links to the same node
-function computeLinkBreadths(graph) {
-  graph.nodes.forEach(function (node) {
-    node.sourceLinks.sort(ascendingTargetBreadth);
-    node.targetLinks.sort(ascendingSourceBreadth);
+// Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
+function computeNodeBreadths(graph, iterations, id, scale, paddingRatio, verticalMargin, baseRadius, value, x0, x1, y0, y1, dx, py) {
+  var columns = nest().key(function (d) {
+    return d.column;
+  }).sortKeys(ascending).entries(graph.nodes).map(function (d) {
+    return d.values;
   });
-  graph.nodes.forEach(function (node) {
-    var y0 = node.y0;
-    var y1 = y0;
 
-    // start from the bottom of the node for cycle links
-    var y0cycle = node.y1;
-    var y1cycle = y0cycle;
+  var initializeNodeBreadthResult = initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1, dx, py, value, graph, verticalMargin, baseRadius);
+  var newPy = initializeNodeBreadthResult.newPy;
+  columns = initializeNodeBreadthResult.columns;
+  var newGraph = initializeNodeBreadthResult.graph;
+  var newX0 = initializeNodeBreadthResult.newX0;
+  var newX1 = initializeNodeBreadthResult.newX1;
+  var newY0 = initializeNodeBreadthResult.newY0;
+  var newY1 = initializeNodeBreadthResult.newY1;
+  var newDx = initializeNodeBreadthResult.newDx;
 
-    node.sourceLinks.forEach(function (link) {
-      if (link.circular) {
-        link.y0 = y0cycle - link.width / 2;
-        y0cycle = y0cycle - link.width;
-      } else {
-        link.y0 = y0 + link.width / 2;
-        y0 += link.width;
-      }
-    });
-    node.targetLinks.forEach(function (link) {
-      if (link.circular) {
-        link.y1 = y1cycle - link.width / 2;
-        y1cycle = y1cycle - link.width;
-      } else {
-        link.y1 = y1 + link.width / 2;
-        y1 += link.width;
-      }
-    });
-  });
+  resolveCollisions(columns, newY0, newY1, newPy);
+
+  for (var alpha = 1, n = iterations; n > 0; --n) {
+    relaxLeftAndRight(alpha *= 0.99, id, columns, newY1);
+    resolveCollisions(columns, newY0, newY1, newPy);
+  }
+  return {
+    newPy: newPy,
+    newGraph: newGraph,
+    newX0: newX0,
+    newX1: newX1,
+    newY0: newY0,
+    newY1: newY1,
+    newDx: newDx
+  };
 }
 
 // https://github.com/tomshanley/d3-sankeyCircular-circular
@@ -3112,7 +3147,14 @@ function sankeyCircular () {
 
     // 6.  Calculate the nodes' and links' vertical position within their respective column
     //     Also readjusts sankeyCircular size if circular links are needed, and node x's
-    computeNodeBreadths(graph, iterations, id);
+    var computeNodeBreadthsResult = computeNodeBreadths(graph, iterations, id, scale, paddingRatio, verticalMargin, baseRadius, value, x0, x1, y0, y1, dx, py);
+    x0 = computeNodeBreadthsResult.newX0;
+    x1 = computeNodeBreadthsResult.newX1;
+    y0 = computeNodeBreadthsResult.newY0;
+    y1 = computeNodeBreadthsResult.newY1;
+    dx = computeNodeBreadthsResult.newDx;
+    py = computeNodeBreadthsResult.newPy;
+    graph = computeNodeBreadthsResult.newGraph;
     computeLinkBreadths(graph);
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
@@ -3184,31 +3226,6 @@ function sankeyCircular () {
     return arguments.length ? (paddingRatio = +_, sankeyCircular) : paddingRatio;
   };
 
-  // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
-  function computeNodeBreadths(graph, iterations, id) {
-    var columns = nest().key(function (d) {
-      return d.column;
-    }).sortKeys(ascending).entries(graph.nodes).map(function (d) {
-      return d.values;
-    });
-
-    var initializeNodeBreadthResult = initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1, dx, py, value, graph, verticalMargin, baseRadius);
-    py = initializeNodeBreadthResult.newPy;
-    columns = initializeNodeBreadthResult.columns;
-    graph = initializeNodeBreadthResult.graph;
-    x0 = initializeNodeBreadthResult.newX0;
-    x1 = initializeNodeBreadthResult.newX1;
-    y0 = initializeNodeBreadthResult.newY0;
-    y1 = initializeNodeBreadthResult.newY1;
-    dx = initializeNodeBreadthResult.newDx;
-
-    resolveCollisions(columns, y0, y1, py);
-
-    for (var alpha = 1, n = iterations; n > 0; --n) {
-      relaxLeftAndRight(alpha *= 0.99, id, columns, y1);
-      resolveCollisions(columns, y0, y1, py);
-    }
-  }
   return sankeyCircular;
 }
 

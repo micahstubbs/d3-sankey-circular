@@ -1,10 +1,5 @@
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
-// external imports
-import { ascending } from 'd3-array'
-import { nest } from 'd3-collection'
-
-// project imports
 import constant from './constant'
 import { justify } from './align'
 import fillHeight from './fillHeight'
@@ -19,10 +14,8 @@ import computeNodeLinks from './computeNodeLinks'
 import computeNodeValues from './computeNodeValues'
 import computeNodeDepths from './computeNodeDepths'
 
-import resolveCollisions from './resolveCollisions'
-import relaxLeftAndRight from './relaxLeftAndRight'
-import initializeNodeBreadth from './initializeNodeBreadth'
 import computeLinkBreadths from './computeLinkBreadths'
+import computeNodeBreadths from './computeNodeBreadths'
 
 // return the value of a node or link
 function value(d) {
@@ -110,7 +103,29 @@ export default function() {
 
     // 6.  Calculate the nodes' and links' vertical position within their respective column
     //     Also readjusts sankeyCircular size if circular links are needed, and node x's
-    computeNodeBreadths(graph, iterations, id)
+    const computeNodeBreadthsResult = computeNodeBreadths(
+      graph,
+      iterations,
+      id,
+      scale,
+      paddingRatio,
+      verticalMargin,
+      baseRadius,
+      value,
+      x0,
+      x1,
+      y0,
+      y1,
+      dx,
+      py
+    )
+    x0 = computeNodeBreadthsResult.newX0
+    x1 = computeNodeBreadthsResult.newX1
+    y0 = computeNodeBreadthsResult.newY0
+    y1 = computeNodeBreadthsResult.newY1
+    dx = computeNodeBreadthsResult.newDx
+    py = computeNodeBreadthsResult.newPy
+    graph = computeNodeBreadthsResult.newGraph
     computeLinkBreadths(graph)
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
@@ -209,50 +224,6 @@ export default function() {
       : paddingRatio
   }
 
-  // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
-  function computeNodeBreadths(graph, iterations, id) {
-    var columns = nest()
-      .key(function(d) {
-        return d.column
-      })
-      .sortKeys(ascending)
-      .entries(graph.nodes)
-      .map(function(d) {
-        return d.values
-      })
-
-    const initializeNodeBreadthResult = initializeNodeBreadth(
-      id,
-      scale,
-      paddingRatio,
-      columns,
-      x0,
-      x1,
-      y0,
-      y1,
-      dx,
-      py,
-      value,
-      graph,
-      verticalMargin,
-      baseRadius
-    )
-    py = initializeNodeBreadthResult.newPy
-    columns = initializeNodeBreadthResult.columns
-    graph = initializeNodeBreadthResult.graph
-    x0 = initializeNodeBreadthResult.newX0
-    x1 = initializeNodeBreadthResult.newX1
-    y0 = initializeNodeBreadthResult.newY0
-    y1 = initializeNodeBreadthResult.newY1
-    dx = initializeNodeBreadthResult.newDx
-
-    resolveCollisions(columns, y0, y1, py)
-
-    for (var alpha = 1, n = iterations; n > 0; --n) {
-      relaxLeftAndRight((alpha *= 0.99), id, columns, y1)
-      resolveCollisions(columns, y0, y1, py)
-    }
-  }
   return sankeyCircular
 }
 
