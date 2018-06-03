@@ -29,6 +29,7 @@
     "babel-preset-env": "^1.7.0",
     "babelrc-rollup": "^3.0.0",
     "derequire": "^2.0.6",
+    "eslint": "^4.19.1",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.2",
     "rollup": "^0.59.4",
@@ -49,8 +50,12 @@
       ]
     ]
   },
-  "files": ["dist"],
-  "keywords": ["d3"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "d3"
+  ],
   "bugs": {
     "url": "https://github.com/tomshanley/d3-sankey-circular/issues"
   },
