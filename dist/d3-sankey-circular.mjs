@@ -2718,7 +2718,8 @@ function ascendingTargetBreadth(a, b) {
 
 // Assign the links y0 and y1 based on source/target nodes position,
 // plus the link's relative position to other links to the same node
-function computeLinkBreadths(graph) {
+function computeLinkBreadths(inputGraph) {
+  var graph = cloneDeep(inputGraph);
   graph.nodes.forEach(function (node) {
     node.sourceLinks.sort(ascendingTargetBreadth);
     node.targetLinks.sort(ascendingSourceBreadth);
@@ -2750,6 +2751,7 @@ function computeLinkBreadths(graph) {
       }
     });
   });
+  return graph;
 }
 
 // For each column, check if nodes are overlapping, and if so, shift up/down
@@ -3156,7 +3158,7 @@ function sankeyCircular () {
     dx = computeNodeBreadthsResult.newDx;
     py = computeNodeBreadthsResult.newPy;
     graph = computeNodeBreadthsResult.graph;
-    computeLinkBreadths(graph);
+    graph = computeLinkBreadths(graph);
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
     // 8.  Adjust nodes that overlap links that span 2+ columns

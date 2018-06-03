@@ -1,9 +1,12 @@
+import cloneDeep from '../lib/cloneDeep'
+
 import ascendingSourceBreadth from './ascendingSourceBreadth'
 import ascendingTargetBreadth from './ascendingTargetBreadth'
 
 // Assign the links y0 and y1 based on source/target nodes position,
 // plus the link's relative position to other links to the same node
-export default function computeLinkBreadths(graph) {
+export default function computeLinkBreadths(inputGraph) {
+  const graph = cloneDeep(inputGraph)
   graph.nodes.forEach(function(node) {
     node.sourceLinks.sort(ascendingTargetBreadth)
     node.targetLinks.sort(ascendingSourceBreadth)
@@ -35,4 +38,5 @@ export default function computeLinkBreadths(graph) {
       }
     })
   })
+  return graph
 }

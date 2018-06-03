@@ -126,7 +126,7 @@ export default function() {
     dx = computeNodeBreadthsResult.newDx
     py = computeNodeBreadthsResult.newPy
     graph = computeNodeBreadthsResult.graph
-    computeLinkBreadths(graph)
+    graph = computeLinkBreadths(graph)
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
     // 8.  Adjust nodes that overlap links that span 2+ columns
