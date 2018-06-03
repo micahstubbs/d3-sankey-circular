@@ -1,3 +1,5 @@
+import { min, max } from 'd3-array'
+
 export default function fillHeight(graph, y0, y1) {
   var nodes = graph.nodes
   var links = graph.links
