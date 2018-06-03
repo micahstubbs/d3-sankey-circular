@@ -79,7 +79,6 @@ export default function sortTargetLinks(graph, y1, id) {
     var yTargetOffset = node.y0
 
     nodesTargetLinks.forEach(function(link) {
-      s
       link.y1 = yTargetOffset + link.width / 2
       yTargetOffset = yTargetOffset + link.width
     })
