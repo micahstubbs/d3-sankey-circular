@@ -38,12 +38,12 @@ export default function addCircularPathData(
   var topLinks = graph.links.filter(function(l) {
     return l.circularLinkType == 'top'
   })
-  topLinks = calcVerticalBuffer(topLinks, circularLinkGap, id)
+  /* topLinks = */ calcVerticalBuffer(topLinks, circularLinkGap, id)
 
   var bottomLinks = graph.links.filter(function(l) {
     return l.circularLinkType == 'bottom'
   })
-  bottomLinks = calcVerticalBuffer(bottomLinks, circularLinkGap, id)
+  /* bottomLinks = */ calcVerticalBuffer(bottomLinks, circularLinkGap, id)
 
   // add the base data for each link
   graph.links.forEach(function(link) {
