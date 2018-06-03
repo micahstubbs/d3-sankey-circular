@@ -770,21 +770,6 @@
     });
   }
 
-  // Return the number of circular links for node, not including self linking links
-  function numberOfNonSelfLinkingCycles(node, id) {
-    var sourceCount = 0;
-    node.sourceLinks.forEach(function (l) {
-      sourceCount = l.circular && !selfLinking(l, id) ? sourceCount + 1 : sourceCount;
-    });
-
-    var targetCount = 0;
-    node.targetLinks.forEach(function (l) {
-      targetCount = l.circular && !selfLinking(l, id) ? targetCount + 1 : targetCount;
-    });
-
-    return sourceCount + targetCount;
-  }
-
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -2775,6 +2760,21 @@
     return nodeCenter(link.target);
   }
 
+  // Return the number of circular links for node, not including self linking links
+  function numberOfNonSelfLinkingCycles(node, id) {
+    var sourceCount = 0;
+    node.sourceLinks.forEach(function (l) {
+      sourceCount = l.circular && !selfLinking(l, id) ? sourceCount + 1 : sourceCount;
+    });
+
+    var targetCount = 0;
+    node.targetLinks.forEach(function (l) {
+      targetCount = l.circular && !selfLinking(l, id) ? targetCount + 1 : targetCount;
+    });
+
+    return sourceCount + targetCount;
+  }
+
   // For each node in each column,
   // check the node's vertical position in relation to
   // its target's and source's vertical position
@@ -2823,6 +2823,34 @@
     });
   }
 
+  // Update the x0, y0, x1 and y1 for the sankeyCircular, to allow space for any circular links
+  function scaleSankeySize(graph, margin, x0, x1, y0, y1, dx) {
+    var maxColumn = d3Array.max(graph.nodes, function (node) {
+      return node.column;
+    });
+
+    var currentWidth = x1 - x0;
+    var currentHeight = y1 - y0;
+
+    var newWidth = currentWidth + margin.right + margin.left;
+    var newHeight = currentHeight + margin.top + margin.bottom;
+
+    var scaleX = currentWidth / newWidth;
+    var scaleY = currentHeight / newHeight;
+
+    x0 = x0 * scaleX + margin.left;
+    x1 = margin.right == 0 ? x1 : x1 * scaleX;
+    y0 = y0 * scaleY + margin.top;
+    y1 = y1 * scaleY;
+
+    graph.nodes.forEach(function (node) {
+      node.x0 = x0 + node.column * ((x1 - x0 - dx) / maxColumn);
+      node.x1 = node.x0 + dx;
+    });
+
+    return { scaleY: scaleY, x0: x0, x1: x1, y0: y0, y1: y1, dx: dx };
+  }
+
   function getCircleMargins(graph, verticalMargin, baseRadius) {
     var totalTopLinksWidth = 0,
         totalBottomLinksWidth = 0,
@@ -2865,32 +2893,87 @@
     };
   }
 
-  // Update the x0, y0, x1 and y1 for the sankeyCircular, to allow space for any circular links
-  function scaleSankeySize(graph, margin, x0, x1, y0, y1, dx) {
-    var maxColumn = d3Array.max(graph.nodes, function (node) {
-      return node.column;
+  function initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1, dx, py, value, graph, verticalMargin, baseRadius) {
+    var newPy = py;
+    // update `newPy` if nodePadding has been set
+    if (paddingRatio) {
+      var padding = Infinity;
+      columns.forEach(function (nodes) {
+        var thisPadding = y1 * paddingRatio / (nodes.length + 1);
+        padding = thisPadding < padding ? thisPadding : padding;
+      });
+      newPy = padding;
+    }
+
+    var ky = d3Array.min(columns, function (nodes) {
+      return (y1 - y0 - (nodes.length - 1) * newPy) / d3Array.sum(nodes, value);
     });
 
-    var currentWidth = x1 - x0;
-    var currentHeight = y1 - y0;
+    //calculate the widths of the links
+    ky = ky * scale;
 
-    var newWidth = currentWidth + margin.right + margin.left;
-    var newHeight = currentHeight + margin.top + margin.bottom;
-
-    var scaleX = currentWidth / newWidth;
-    var scaleY = currentHeight / newHeight;
-
-    x0 = x0 * scaleX + margin.left;
-    x1 = margin.right == 0 ? x1 : x1 * scaleX;
-    y0 = y0 * scaleY + margin.top;
-    y1 = y1 * scaleY;
-
-    graph.nodes.forEach(function (node) {
-      node.x0 = x0 + node.column * ((x1 - x0 - dx) / maxColumn);
-      node.x1 = node.x0 + dx;
+    graph.links.forEach(function (link) {
+      link.width = link.value * ky;
     });
 
-    return { scaleY: scaleY, x0: x0, x1: x1, y0: y0, y1: y1, dx: dx };
+    //determine how much to scale down the chart, based on circular links
+    var margin = getCircleMargins(graph, verticalMargin, baseRadius);
+    var scaleSankeySizeResult = scaleSankeySize(graph, margin, x0, x1, y0, y1, dx);
+    var ratio = scaleSankeySizeResult.scaleY;
+    var newX0 = scaleSankeySizeResult.x0;
+    var newX1 = scaleSankeySizeResult.x1;
+    var newY0 = scaleSankeySizeResult.y0;
+    var newY1 = scaleSankeySizeResult.y1;
+    var newDx = scaleSankeySizeResult.dx;
+
+    //re-calculate widths
+    ky = ky * ratio;
+
+    graph.links.forEach(function (link) {
+      link.width = link.value * ky;
+    });
+
+    columns.forEach(function (nodes) {
+      var nodesLength = nodes.length;
+      nodes.forEach(function (node, i) {
+        if (node.depth == columns.length - 1 && nodesLength == 1) {
+          node.y0 = newY1 / 2 - node.value * ky;
+          node.y1 = node.y0 + node.value * ky;
+        } else if (node.depth == 0 && nodesLength == 1) {
+          node.y0 = newY1 / 2 - node.value * ky;
+          node.y1 = node.y0 + node.value * ky;
+        } else if (node.partOfCycle) {
+          if (numberOfNonSelfLinkingCycles(node, id) == 0) {
+            node.y0 = newY1 / 2 + i;
+            node.y1 = node.y0 + node.value * ky;
+          } else if (node.circularLinkType == 'top') {
+            node.y0 = newY0 + i;
+            node.y1 = node.y0 + node.value * ky;
+          } else {
+            node.y0 = newY1 - node.value * ky - i;
+            node.y1 = node.y0 + node.value * ky;
+          }
+        } else {
+          if (margin.top == 0 || margin.bottom == 0) {
+            node.y0 = (newY1 - newY0) / nodesLength * i;
+            node.y1 = node.y0 + node.value * ky;
+          } else {
+            node.y0 = (newY1 - newY0) / 2 - nodesLength / 2 + i;
+            node.y1 = node.y0 + node.value * ky;
+          }
+        }
+      });
+    });
+    return {
+      newPy: newPy,
+      columns: columns,
+      graph: graph,
+      newX0: newX0,
+      newX1: newX1,
+      newY0: newY0,
+      newY1: newY1,
+      newDx: newDx
+    };
   }
 
   // https://github.com/tomshanley/d3-sankeyCircular-circular
@@ -3075,84 +3158,21 @@
         return d.values;
       });
 
-      initializeNodeBreadth(id);
+      var initializeNodeBreadthResult = initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1, dx, py, value, graph, verticalMargin, baseRadius);
+      py = initializeNodeBreadthResult.newPy;
+      columns = initializeNodeBreadthResult.columns;
+      graph = initializeNodeBreadthResult.graph;
+      x0 = initializeNodeBreadthResult.newX0;
+      x1 = initializeNodeBreadthResult.newX1;
+      y0 = initializeNodeBreadthResult.newY0;
+      y1 = initializeNodeBreadthResult.newY1;
+      dx = initializeNodeBreadthResult.newDx;
+
       resolveCollisions(columns, y0, y1, py);
 
       for (var alpha = 1, n = iterations; n > 0; --n) {
         relaxLeftAndRight(alpha *= 0.99, id, columns, y1);
         resolveCollisions(columns, y0, y1, py);
-      }
-
-      function initializeNodeBreadth(id) {
-        //override py if nodePadding has been set
-        if (paddingRatio) {
-          var padding = Infinity;
-          columns.forEach(function (nodes) {
-            var thisPadding = y1 * paddingRatio / (nodes.length + 1);
-            padding = thisPadding < padding ? thisPadding : padding;
-          });
-          py = padding;
-        }
-
-        var ky = d3Array.min(columns, function (nodes) {
-          return (y1 - y0 - (nodes.length - 1) * py) / d3Array.sum(nodes, value);
-        });
-
-        //calculate the widths of the links
-        ky = ky * scale;
-
-        graph.links.forEach(function (link) {
-          link.width = link.value * ky;
-        });
-
-        //determine how much to scale down the chart, based on circular links
-        var margin = getCircleMargins(graph, verticalMargin, baseRadius);
-        var scaleSankeySizeResult = scaleSankeySize(graph, margin, x0, x1, y0, y1, dx);
-        var ratio = scaleSankeySizeResult.scaleY;
-        x0 = scaleSankeySizeResult.x0;
-        x1 = scaleSankeySizeResult.x1;
-        y0 = scaleSankeySizeResult.y0;
-        y1 = scaleSankeySizeResult.y1;
-        dx = scaleSankeySizeResult.dx;
-
-        //re-calculate widths
-        ky = ky * ratio;
-
-        graph.links.forEach(function (link) {
-          link.width = link.value * ky;
-        });
-
-        columns.forEach(function (nodes) {
-          var nodesLength = nodes.length;
-          nodes.forEach(function (node, i) {
-            if (node.depth == columns.length - 1 && nodesLength == 1) {
-              node.y0 = y1 / 2 - node.value * ky;
-              node.y1 = node.y0 + node.value * ky;
-            } else if (node.depth == 0 && nodesLength == 1) {
-              node.y0 = y1 / 2 - node.value * ky;
-              node.y1 = node.y0 + node.value * ky;
-            } else if (node.partOfCycle) {
-              if (numberOfNonSelfLinkingCycles(node, id) == 0) {
-                node.y0 = y1 / 2 + i;
-                node.y1 = node.y0 + node.value * ky;
-              } else if (node.circularLinkType == 'top') {
-                node.y0 = y0 + i;
-                node.y1 = node.y0 + node.value * ky;
-              } else {
-                node.y0 = y1 - node.value * ky - i;
-                node.y1 = node.y0 + node.value * ky;
-              }
-            } else {
-              if (margin.top == 0 || margin.bottom == 0) {
-                node.y0 = (y1 - y0) / nodesLength * i;
-                node.y1 = node.y0 + node.value * ky;
-              } else {
-                node.y0 = (y1 - y0) / 2 - nodesLength / 2 + i;
-                node.y1 = node.y0 + node.value * ky;
-              }
-            }
-          });
-        });
       }
     }
 

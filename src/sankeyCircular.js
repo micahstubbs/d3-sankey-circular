@@ -1,7 +1,7 @@
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
 // external imports
-import { ascending, min, sum } from 'd3-array'
+import { ascending } from 'd3-array'
 import { nest } from 'd3-collection'
 
 // project imports
@@ -13,7 +13,6 @@ import addCircularPathData from './addCircularPathData'
 import ascendingBreadth from './ascendingBreadth'
 import sortSourceLinks from './sortSourceLinks'
 import resolveNodeLinkOverlaps from './resolveNodeLinkOverlaps'
-import numberOfNonSelfLinkingCycles from './numberOfNonSelfLinkingCycles'
 import selectCircularLinkTypes from './selectCircularLinkTypes'
 import identifyCircles from './identifyCircles'
 import computeNodeLinks from './computeNodeLinks'
@@ -22,8 +21,7 @@ import computeNodeDepths from './computeNodeDepths'
 
 import resolveCollisions from './resolveCollisions'
 import relaxLeftAndRight from './relaxLeftAndRight'
-import getCircleMargins from './getCircleMargins'
-import scaleSankeySize from './scaleSankeySize'
+import initializeNodeBreadth from './initializeNodeBreadth'
 
 // sort links' breadth (ie top to bottom in a column),
 // based on their source nodes' breadths
@@ -234,92 +232,36 @@ export default function() {
         return d.values
       })
 
-    initializeNodeBreadth(id)
+    const initializeNodeBreadthResult = initializeNodeBreadth(
+      id,
+      scale,
+      paddingRatio,
+      columns,
+      x0,
+      x1,
+      y0,
+      y1,
+      dx,
+      py,
+      value,
+      graph,
+      verticalMargin,
+      baseRadius
+    )
+    py = initializeNodeBreadthResult.newPy
+    columns = initializeNodeBreadthResult.columns
+    graph = initializeNodeBreadthResult.graph
+    x0 = initializeNodeBreadthResult.newX0
+    x1 = initializeNodeBreadthResult.newX1
+    y0 = initializeNodeBreadthResult.newY0
+    y1 = initializeNodeBreadthResult.newY1
+    dx = initializeNodeBreadthResult.newDx
+
     resolveCollisions(columns, y0, y1, py)
 
     for (var alpha = 1, n = iterations; n > 0; --n) {
       relaxLeftAndRight((alpha *= 0.99), id, columns, y1)
       resolveCollisions(columns, y0, y1, py)
-    }
-
-    function initializeNodeBreadth(id) {
-      //override py if nodePadding has been set
-      if (paddingRatio) {
-        var padding = Infinity
-        columns.forEach(function(nodes) {
-          var thisPadding = y1 * paddingRatio / (nodes.length + 1)
-          padding = thisPadding < padding ? thisPadding : padding
-        })
-        py = padding
-      }
-
-      var ky = min(columns, function(nodes) {
-        return (y1 - y0 - (nodes.length - 1) * py) / sum(nodes, value)
-      })
-
-      //calculate the widths of the links
-      ky = ky * scale
-
-      graph.links.forEach(function(link) {
-        link.width = link.value * ky
-      })
-
-      //determine how much to scale down the chart, based on circular links
-      var margin = getCircleMargins(graph, verticalMargin, baseRadius)
-      const scaleSankeySizeResult = scaleSankeySize(
-        graph,
-        margin,
-        x0,
-        x1,
-        y0,
-        y1,
-        dx
-      )
-      const ratio = scaleSankeySizeResult.scaleY
-      x0 = scaleSankeySizeResult.x0
-      x1 = scaleSankeySizeResult.x1
-      y0 = scaleSankeySizeResult.y0
-      y1 = scaleSankeySizeResult.y1
-      dx = scaleSankeySizeResult.dx
-
-      //re-calculate widths
-      ky = ky * ratio
-
-      graph.links.forEach(function(link) {
-        link.width = link.value * ky
-      })
-
-      columns.forEach(function(nodes) {
-        var nodesLength = nodes.length
-        nodes.forEach(function(node, i) {
-          if (node.depth == columns.length - 1 && nodesLength == 1) {
-            node.y0 = y1 / 2 - node.value * ky
-            node.y1 = node.y0 + node.value * ky
-          } else if (node.depth == 0 && nodesLength == 1) {
-            node.y0 = y1 / 2 - node.value * ky
-            node.y1 = node.y0 + node.value * ky
-          } else if (node.partOfCycle) {
-            if (numberOfNonSelfLinkingCycles(node, id) == 0) {
-              node.y0 = y1 / 2 + i
-              node.y1 = node.y0 + node.value * ky
-            } else if (node.circularLinkType == 'top') {
-              node.y0 = y0 + i
-              node.y1 = node.y0 + node.value * ky
-            } else {
-              node.y0 = y1 - node.value * ky - i
-              node.y1 = node.y0 + node.value * ky
-            }
-          } else {
-            if (margin.top == 0 || margin.bottom == 0) {
-              node.y0 = (y1 - y0) / nodesLength * i
-              node.y1 = node.y0 + node.value * ky
-            } else {
-              node.y0 = (y1 - y0) / 2 - nodesLength / 2 + i
-              node.y1 = node.y0 + node.value * ky
-            }
-          }
-        })
-      })
     }
   }
 
