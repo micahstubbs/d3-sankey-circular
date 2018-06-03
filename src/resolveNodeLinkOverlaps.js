@@ -39,9 +39,11 @@ export default function resolveNodeLinkOverlaps(graph, y0, y1, id) {
             var linkY0AtColumn = py_t - link.width / 2
             var linkY1AtColumn = py_t + link.width / 2
 
+            var dy
+
             // If top of link overlaps node, push node up
             if (linkY0AtColumn > node.y0 && linkY0AtColumn < node.y1) {
-              var dy = node.y1 - linkY0AtColumn + 10
+              dy = node.y1 - linkY0AtColumn + 10
               dy = node.circularLinkType == 'bottom' ? dy : -dy
 
               node = adjustNodeHeight(node, dy, y0, y1)
@@ -61,7 +63,7 @@ export default function resolveNodeLinkOverlaps(graph, y0, y1, id) {
               })
             } else if (linkY1AtColumn > node.y0 && linkY1AtColumn < node.y1) {
               // If bottom of link overlaps node, push node down
-              var dy = linkY1AtColumn - node.y0 + 10
+              dy = linkY1AtColumn - node.y0 + 10
 
               node = adjustNodeHeight(node, dy, y0, y1)
 
@@ -80,7 +82,7 @@ export default function resolveNodeLinkOverlaps(graph, y0, y1, id) {
               })
             } else if (linkY0AtColumn < node.y0 && linkY1AtColumn > node.y1) {
               // if link completely overlaps node
-              var dy = linkY1AtColumn - node.y0 + 10
+              dy = linkY1AtColumn - node.y0 + 10
 
               node = adjustNodeHeight(node, dy, y0, y1)
 
