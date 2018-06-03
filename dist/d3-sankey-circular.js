@@ -1,7 +1,7 @@
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('d3-array'), require('d3-shape'), require('d3-collection')) :
   typeof define === 'function' && define.amd ? define(['exports', 'd3-array', 'd3-shape', 'd3-collection'], factory) :
-  (factory((global.sankeyCircular = {}),global.d3,global.d3,global.d3));
+  (factory((global.d3 = global.d3 || {}),global.d3,global.d3,global.d3));
 }(this, (function (exports,d3Array,d3Shape,d3Collection) { 'use strict';
 
   // returns a function, using the parameter given to the sankey setting
