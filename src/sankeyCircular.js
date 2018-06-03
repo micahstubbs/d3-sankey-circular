@@ -1,7 +1,7 @@
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
 // external imports
-import { ascending, min, max, mean, sum } from 'd3-array'
+import { ascending, min, max, sum } from 'd3-array'
 import { nest } from 'd3-collection'
 
 // project imports
@@ -21,6 +21,7 @@ import computeNodeValues from './computeNodeValues'
 import computeNodeDepths from './computeNodeDepths'
 
 import resolveCollisions from './resolveCollisions'
+import relaxLeftAndRight from './relaxLeftAndRight'
 
 // sort links' breadth (ie top to bottom in a column),
 // based on their source nodes' breadths
@@ -37,20 +38,6 @@ function ascendingTargetBreadth(a, b) {
 // return the value of a node or link
 function value(d) {
   return d.value
-}
-
-// return the vertical center of a node
-function nodeCenter(node) {
-  return (node.y0 + node.y1) / 2
-}
-
-// return the vertical center of a link's source node
-function linkSourceCenter(link) {
-  return nodeCenter(link.source)
-}
-// return the vertical center of a link's target node
-function linkTargetCenter(link) {
-  return nodeCenter(link.target)
 }
 
 /* function weightedSource (link) {
@@ -331,7 +318,7 @@ export default function() {
     resolveCollisions(columns, y0, y1, py)
 
     for (var alpha = 1, n = iterations; n > 0; --n) {
-      relaxLeftAndRight((alpha *= 0.99), id)
+      relaxLeftAndRight((alpha *= 0.99), id, columns, y1)
       resolveCollisions(columns, y0, y1, py)
     }
 
@@ -395,60 +382,6 @@ export default function() {
             } else {
               node.y0 = (y1 - y0) / 2 - nodesLength / 2 + i
               node.y1 = node.y0 + node.value * ky
-            }
-          }
-        })
-      })
-    }
-
-    // For each node in each column,
-    // check the node's vertical position in relation to
-    // its target's and source's vertical position
-    // and shift up/down to be closer to
-    // the vertical middle of those targets and sources
-    function relaxLeftAndRight(alpha, id) {
-      var columnsLength = columns.length
-
-      columns.forEach(function(nodes) {
-        var n = nodes.length
-        var depth = nodes[0].depth
-
-        nodes.forEach(function(node) {
-          // check the node is not an orphan
-          var nodeHeight
-          if (node.sourceLinks.length || node.targetLinks.length) {
-            if (
-              node.partOfCycle &&
-              numberOfNonSelfLinkingCycles(node, id) > 0
-            ) {
-
-              /* empty */
-            } else if (depth == 0 && n == 1) {
-              nodeHeight = node.y1 - node.y0
-
-              node.y0 = y1 / 2 - nodeHeight / 2
-              node.y1 = y1 / 2 + nodeHeight / 2
-            } else if (depth == columnsLength - 1 && n == 1) {
-              nodeHeight = node.y1 - node.y0
-
-              node.y0 = y1 / 2 - nodeHeight / 2
-              node.y1 = y1 / 2 + nodeHeight / 2
-            } else {
-              var avg = 0
-
-              var avgTargetY = mean(node.sourceLinks, linkTargetCenter)
-              var avgSourceY = mean(node.targetLinks, linkSourceCenter)
-
-              if (avgTargetY && avgSourceY) {
-                avg = (avgTargetY + avgSourceY) / 2
-              } else {
-                avg = avgTargetY || avgSourceY
-              }
-
-              var dy = (avg - nodeCenter(node)) * alpha
-              // positive if it node needs to move down
-              node.y0 += dy
-              node.y1 += dy
             }
           }
         })
