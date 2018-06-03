@@ -1,7 +1,7 @@
 // https://github.com/tomshanley/d3-sankeyCircular-circular
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
 // external imports
-import { ascending, min, max, sum } from 'd3-array'
+import { ascending, min, sum } from 'd3-array'
 import { nest } from 'd3-collection'
 
 // project imports
@@ -23,6 +23,7 @@ import computeNodeDepths from './computeNodeDepths'
 import resolveCollisions from './resolveCollisions'
 import relaxLeftAndRight from './relaxLeftAndRight'
 import getCircleMargins from './getCircleMargins'
+import scaleSankeySize from './scaleSankeySize'
 
 // sort links' breadth (ie top to bottom in a column),
 // based on their source nodes' breadths
@@ -221,34 +222,6 @@ export default function() {
       : paddingRatio
   }
 
-  // Update the x0, y0, x1 and y1 for the sankeyCircular, to allow space for any circular links
-  function scaleSankeySize(graph, margin) {
-    var maxColumn = max(graph.nodes, function(node) {
-      return node.column
-    })
-
-    var currentWidth = x1 - x0
-    var currentHeight = y1 - y0
-
-    var newWidth = currentWidth + margin.right + margin.left
-    var newHeight = currentHeight + margin.top + margin.bottom
-
-    var scaleX = currentWidth / newWidth
-    var scaleY = currentHeight / newHeight
-
-    x0 = x0 * scaleX + margin.left
-    x1 = margin.right == 0 ? x1 : x1 * scaleX
-    y0 = y0 * scaleY + margin.top
-    y1 = y1 * scaleY
-
-    graph.nodes.forEach(function(node) {
-      node.x0 = x0 + node.column * ((x1 - x0 - dx) / maxColumn)
-      node.x1 = node.x0 + dx
-    })
-
-    return scaleY
-  }
-
   // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
   function computeNodeBreadths(graph, iterations, id) {
     var columns = nest()
@@ -293,7 +266,21 @@ export default function() {
 
       //determine how much to scale down the chart, based on circular links
       var margin = getCircleMargins(graph, verticalMargin, baseRadius)
-      var ratio = scaleSankeySize(graph, margin)
+      const scaleSankeySizeResult = scaleSankeySize(
+        graph,
+        margin,
+        x0,
+        x1,
+        y0,
+        y1,
+        dx
+      )
+      const ratio = scaleSankeySizeResult.scaleY
+      x0 = scaleSankeySizeResult.x0
+      x1 = scaleSankeySizeResult.x1
+      y0 = scaleSankeySizeResult.y0
+      y1 = scaleSankeySizeResult.y1
+      dx = scaleSankeySizeResult.dx
 
       //re-calculate widths
       ky = ky * ratio
