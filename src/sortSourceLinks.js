@@ -1,7 +1,6 @@
 import getNodeID from './getNodeID'
 import sameInclines from './sameInclines'
 import linkPerpendicularYToLinkTarget from './linkPerpendicularYToLinkTarget'
-import linkAngle from './linkAngle'
 
 // sort and set the links' y0 for each node
 export default function sortSourceLinks(graph, y1, id) {
