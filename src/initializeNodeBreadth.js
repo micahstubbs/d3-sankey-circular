@@ -53,12 +53,12 @@ export default function initializeNodeBreadth(
     y1,
     dx
   )
-  let ratio = scaleSankeySizeResult.scaleY
-  let newX0 = scaleSankeySizeResult.x0
-  let newX1 = scaleSankeySizeResult.x1
-  let newY0 = scaleSankeySizeResult.y0
-  let newY1 = scaleSankeySizeResult.y1
-  let newDx = scaleSankeySizeResult.dx
+  const ratio = scaleSankeySizeResult.scaleY
+  const newX0 = scaleSankeySizeResult.x0
+  const newX1 = scaleSankeySizeResult.x1
+  const newY0 = scaleSankeySizeResult.y0
+  const newY1 = scaleSankeySizeResult.y1
+  const newDx = scaleSankeySizeResult.dx
 
   //re-calculate widths
   ky = ky * ratio

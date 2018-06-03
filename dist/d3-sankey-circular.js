@@ -517,21 +517,6 @@
     });
   }
 
-  // sort nodes' breadth (ie top to bottom in a column)
-  // if both nodes have circular links, or both don't have circular links, then sort by the top (y0) of the node
-  // else push nodes that have top circular links to the top, and nodes that have bottom circular links to the bottom
-  function ascendingBreadth(a, b) {
-    if (a.partOfCycle === b.partOfCycle) {
-      return a.y0 - b.y0;
-    } else {
-      if (a.circularLinkType === 'top' || b.circularLinkType === 'bottom') {
-        return -1;
-      } else {
-        return 1;
-      }
-    }
-  }
-
   // Return the Y coordinate on the longerLink path *
   // which is perpendicular shorterLink's source.
   //
@@ -2706,6 +2691,21 @@
     return graph;
   }
 
+  // sort nodes' breadth (ie top to bottom in a column)
+  // if both nodes have circular links, or both don't have circular links, then sort by the top (y0) of the node
+  // else push nodes that have top circular links to the top, and nodes that have bottom circular links to the bottom
+  function ascendingBreadth(a, b) {
+    if (a.partOfCycle === b.partOfCycle) {
+      return a.y0 - b.y0;
+    } else {
+      if (a.circularLinkType === 'top' || b.circularLinkType === 'bottom') {
+        return -1;
+      } else {
+        return 1;
+      }
+    }
+  }
+
   // For each column, check if nodes are overlapping, and if so, shift up/down
   function resolveCollisions(columns, y0, y1, py) {
     columns.forEach(function (nodes) {
@@ -2976,8 +2976,6 @@
     };
   }
 
-  // https://github.com/tomshanley/d3-sankeyCircular-circular
-
   // sort links' breadth (ie top to bottom in a column),
   // based on their source nodes' breadths
   function ascendingSourceBreadth(a, b) {
@@ -2989,6 +2987,44 @@
   function ascendingTargetBreadth(a, b) {
     return ascendingBreadth(a.target, b.target) || a.index - b.index;
   }
+
+  // Assign the links y0 and y1 based on source/target nodes position,
+  // plus the link's relative position to other links to the same node
+  function computeLinkBreadths(graph) {
+    graph.nodes.forEach(function (node) {
+      node.sourceLinks.sort(ascendingTargetBreadth);
+      node.targetLinks.sort(ascendingSourceBreadth);
+    });
+    graph.nodes.forEach(function (node) {
+      var y0 = node.y0;
+      var y1 = y0;
+
+      // start from the bottom of the node for cycle links
+      var y0cycle = node.y1;
+      var y1cycle = y0cycle;
+
+      node.sourceLinks.forEach(function (link) {
+        if (link.circular) {
+          link.y0 = y0cycle - link.width / 2;
+          y0cycle = y0cycle - link.width;
+        } else {
+          link.y0 = y0 + link.width / 2;
+          y0 += link.width;
+        }
+      });
+      node.targetLinks.forEach(function (link) {
+        if (link.circular) {
+          link.y1 = y1cycle - link.width / 2;
+          y1cycle = y1cycle - link.width;
+        } else {
+          link.y1 = y1 + link.width / 2;
+          y1 += link.width;
+        }
+      });
+    });
+  }
+
+  // https://github.com/tomshanley/d3-sankeyCircular-circular
 
   // return the value of a node or link
   function value(d) {
@@ -3175,43 +3211,6 @@
         resolveCollisions(columns, y0, y1, py);
       }
     }
-
-    // Assign the links y0 and y1 based on source/target nodes position,
-    // plus the link's relative position to other links to the same node
-    function computeLinkBreadths(graph) {
-      graph.nodes.forEach(function (node) {
-        node.sourceLinks.sort(ascendingTargetBreadth);
-        node.targetLinks.sort(ascendingSourceBreadth);
-      });
-      graph.nodes.forEach(function (node) {
-        var y0 = node.y0;
-        var y1 = y0;
-
-        // start from the bottom of the node for cycle links
-        var y0cycle = node.y1;
-        var y1cycle = y0cycle;
-
-        node.sourceLinks.forEach(function (link) {
-          if (link.circular) {
-            link.y0 = y0cycle - link.width / 2;
-            y0cycle = y0cycle - link.width;
-          } else {
-            link.y0 = y0 + link.width / 2;
-            y0 += link.width;
-          }
-        });
-        node.targetLinks.forEach(function (link) {
-          if (link.circular) {
-            link.y1 = y1cycle - link.width / 2;
-            y1cycle = y1cycle - link.width;
-          } else {
-            link.y1 = y1 + link.width / 2;
-            y1 += link.width;
-          }
-        });
-      });
-    }
-
     return sankeyCircular;
   }
 
