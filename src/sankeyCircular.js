@@ -125,7 +125,7 @@ export default function() {
     y1 = computeNodeBreadthsResult.newY1
     dx = computeNodeBreadthsResult.newDx
     py = computeNodeBreadthsResult.newPy
-    graph = computeNodeBreadthsResult.newGraph
+    graph = computeNodeBreadthsResult.graph
     computeLinkBreadths(graph)
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths

@@ -1,5 +1,6 @@
 import { ascending } from 'd3-array'
 import { nest } from 'd3-collection'
+import cloneDeep from '../lib/cloneDeep'
 
 import resolveCollisions from './resolveCollisions'
 import relaxLeftAndRight from './relaxLeftAndRight'
@@ -7,7 +8,7 @@ import initializeNodeBreadth from './initializeNodeBreadth'
 
 // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
 export default function computeNodeBreadths(
-  graph,
+  inputGraph,
   iterations,
   id,
   scale,
@@ -22,6 +23,7 @@ export default function computeNodeBreadths(
   dx,
   py
 ) {
+  let graph = cloneDeep(inputGraph)
   let columns = nest()
     .key(function(d) {
       return d.column
@@ -50,7 +52,7 @@ export default function computeNodeBreadths(
   )
   const newPy = initializeNodeBreadthResult.newPy
   columns = initializeNodeBreadthResult.columns
-  const newGraph = initializeNodeBreadthResult.graph
+  graph = initializeNodeBreadthResult.graph
   const newX0 = initializeNodeBreadthResult.newX0
   const newX1 = initializeNodeBreadthResult.newX1
   const newY0 = initializeNodeBreadthResult.newY0
@@ -65,7 +67,7 @@ export default function computeNodeBreadths(
   }
   return {
     newPy,
-    newGraph,
+    graph,
     newX0,
     newX1,
     newY0,

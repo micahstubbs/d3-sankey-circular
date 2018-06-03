@@ -3023,7 +3023,8 @@ function initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1,
 }
 
 // Assign nodes' breadths, and then shift nodes that overlap (resolveCollisions)
-function computeNodeBreadths(graph, iterations, id, scale, paddingRatio, verticalMargin, baseRadius, value, x0, x1, y0, y1, dx, py) {
+function computeNodeBreadths(inputGraph, iterations, id, scale, paddingRatio, verticalMargin, baseRadius, value, x0, x1, y0, y1, dx, py) {
+  var graph = cloneDeep(inputGraph);
   var columns = nest().key(function (d) {
     return d.column;
   }).sortKeys(ascending).entries(graph.nodes).map(function (d) {
@@ -3033,7 +3034,7 @@ function computeNodeBreadths(graph, iterations, id, scale, paddingRatio, vertica
   var initializeNodeBreadthResult = initializeNodeBreadth(id, scale, paddingRatio, columns, x0, x1, y0, y1, dx, py, value, graph, verticalMargin, baseRadius);
   var newPy = initializeNodeBreadthResult.newPy;
   columns = initializeNodeBreadthResult.columns;
-  var newGraph = initializeNodeBreadthResult.graph;
+  graph = initializeNodeBreadthResult.graph;
   var newX0 = initializeNodeBreadthResult.newX0;
   var newX1 = initializeNodeBreadthResult.newX1;
   var newY0 = initializeNodeBreadthResult.newY0;
@@ -3048,7 +3049,7 @@ function computeNodeBreadths(graph, iterations, id, scale, paddingRatio, vertica
   }
   return {
     newPy: newPy,
-    newGraph: newGraph,
+    graph: graph,
     newX0: newX0,
     newX1: newX1,
     newY0: newY0,
@@ -3154,7 +3155,7 @@ function sankeyCircular () {
     y1 = computeNodeBreadthsResult.newY1;
     dx = computeNodeBreadthsResult.newDx;
     py = computeNodeBreadthsResult.newPy;
-    graph = computeNodeBreadthsResult.newGraph;
+    graph = computeNodeBreadthsResult.graph;
     computeLinkBreadths(graph);
 
     // 7.  Sort links per node, based on the links' source/target nodes' breadths
