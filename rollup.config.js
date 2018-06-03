@@ -4,7 +4,7 @@ import babel from 'rollup-plugin-babel'
 import babelrc from 'babelrc-rollup'
 import pkg from './package.json'
 
-let external = Object.keys(pkg.dependencies)
+let external = Object.keys(pkg.dependencies).concat(['lodash/cloneDeep'])
 
 export default [
   // browser-friendly UMD build
@@ -23,11 +23,7 @@ export default [
       }
     },
     external,
-    plugins: [
-      resolve(), // so Rollup can find `d3`
-      commonjs(), // so Rollup can convert `d3` to an ES module
-      babel(babelrc())
-    ]
+    plugins: [resolve(), commonjs(), babel(babelrc())]
   },
 
   // CommonJS (for Node) and ES module (for bundlers) build.
