@@ -2,28 +2,18 @@
 // fork of https://github.com/d3/d3-sankeyCircular copyright Mike Bostock
 // external imports
 import { ascending, min, max, mean, sum } from 'd3-array'
-import { map, nest } from 'd3-collection'
-import cloneDeep from 'lodash/cloneDeep'
+import { nest } from 'd3-collection'
 
 // project imports
 import constant from './constant'
 import { justify } from './align'
 import fillHeight from './fillHeight'
 import sortTargetLinks from './sortTargetLinks'
-import getNodeID from './getNodeID'
-import sameInclines from './sameInclines'
-import incline from './incline'
-import linkAngle from './linkAngle'
-import linkXLength from './linkXLength'
-import createCircularPathString from './createCircularPathString'
 import addCircularPathData from './addCircularPathData'
-import selfLinking from './selfLinking'
-import nodesOverlap from './nodesOverlap'
 import ascendingBreadth from './ascendingBreadth'
 import sortSourceLinks from './sortSourceLinks'
 import resolveNodeLinkOverlaps from './resolveNodeLinkOverlaps'
 import numberOfNonSelfLinkingCycles from './numberOfNonSelfLinkingCycles'
-import createsCycle from './createsCycle'
 import selectCircularLinkTypes from './selectCircularLinkTypes'
 import identifyCircles from './identifyCircles'
 import computeNodeLinks from './computeNodeLinks'
@@ -417,24 +407,27 @@ export default function() {
     function relaxLeftAndRight(alpha, id) {
       var columnsLength = columns.length
 
-      columns.forEach(function(nodes, i) {
+      columns.forEach(function(nodes) {
         var n = nodes.length
         var depth = nodes[0].depth
 
         nodes.forEach(function(node) {
           // check the node is not an orphan
+          var nodeHeight
           if (node.sourceLinks.length || node.targetLinks.length) {
             if (
               node.partOfCycle &&
               numberOfNonSelfLinkingCycles(node, id) > 0
             ) {
+
+              /* empty */
             } else if (depth == 0 && n == 1) {
-              var nodeHeight = node.y1 - node.y0
+              nodeHeight = node.y1 - node.y0
 
               node.y0 = y1 / 2 - nodeHeight / 2
               node.y1 = y1 / 2 + nodeHeight / 2
             } else if (depth == columnsLength - 1 && n == 1) {
-              var nodeHeight = node.y1 - node.y0
+              nodeHeight = node.y1 - node.y0
 
               node.y0 = y1 / 2 - nodeHeight / 2
               node.y1 = y1 / 2 + nodeHeight / 2
@@ -486,7 +479,7 @@ export default function() {
         // If the bottommost node goes outside the bounds, push it back up.
         dy = y - py - y1
         if (dy > 0) {
-          ;(y = node.y0 -= dy), (node.y1 -= dy)
+          (y = node.y0 -= dy), (node.y1 -= dy)
 
           // Push any overlapping nodes back up.
           for (i = n - 2; i >= 0; --i) {
