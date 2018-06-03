@@ -1,4 +1,4 @@
-import { min as min$1, sum, ascending, max as max$1, mean } from 'd3-array';
+import { min, max, sum, ascending, mean } from 'd3-array';
 import { linkHorizontal } from 'd3-shape';
 import cloneDeep from 'lodash/cloneDeep';
 import { map, nest } from 'd3-collection';
@@ -32,7 +32,7 @@ function justify(node, n) {
 
 // The depth of a node when the nodeAlign (align) is set to 'center'
 function center(node) {
-  return node.targetLinks.length ? node.depth : node.sourceLinks.length ? min$1(node.sourceLinks, targetDepth) - 1 : 0;
+  return node.targetLinks.length ? node.depth : node.sourceLinks.length ? min(node.sourceLinks, targetDepth) - 1 : 0;
 }
 
 function fillHeight(graph, y0, y1) {
@@ -211,76 +211,6 @@ function sortTargetLinks(graph, y1, id) {
   });
 }
 
-// create a d path using the circularPathData
-function createCircularPathString(link) {
-      var pathString = '';
-
-      if (link.circularLinkType == 'top') {
-            pathString =
-            // start at the right of the source node
-            'M' + link.circularPathData.sourceX + ' ' + link.circularPathData.sourceY + ' ' +
-            // line right to buffer point
-            'L' + link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.sourceY + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftSmallArcRadius + ' 0 0 0 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.leftFullExtent + ' ' + (link.circularPathData.sourceY - link.circularPathData.leftSmallArcRadius) + ' ' + // End of arc X
-            // line up to buffer point
-            'L' + link.circularPathData.leftFullExtent + ' ' + link.circularPathData.verticalLeftInnerExtent + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftLargeArcRadius + ' 0 0 0 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' + // End of arc X
-            // line left to buffer point
-            'L' + link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightLargeArcRadius + ' 0 0 0 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.rightFullExtent + ' ' + link.circularPathData.verticalRightInnerExtent + ' ' + // End of arc X
-            // line down
-            'L' + link.circularPathData.rightFullExtent + ' ' + (link.circularPathData.targetY - link.circularPathData.rightSmallArcRadius) + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightSmallArcRadius + ' 0 0 0 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.targetY + ' ' + // End of arc X
-            // line to end
-            'L' + link.circularPathData.targetX + ' ' + link.circularPathData.targetY;
-      } else {
-            // bottom path
-            pathString =
-            // start at the right of the source node
-            'M' + link.circularPathData.sourceX + ' ' + link.circularPathData.sourceY + ' ' +
-            // line right to buffer point
-            'L' + link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.sourceY + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftSmallArcRadius + ' 0 0 1 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.leftFullExtent + ' ' + (link.circularPathData.sourceY + link.circularPathData.leftSmallArcRadius) + ' ' + // End of arc X
-            // line down to buffer point
-            'L' + link.circularPathData.leftFullExtent + ' ' + link.circularPathData.verticalLeftInnerExtent + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftLargeArcRadius + ' 0 0 1 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' + // End of arc X
-            // line left to buffer point
-            'L' + link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightLargeArcRadius + ' 0 0 1 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.rightFullExtent + ' ' + link.circularPathData.verticalRightInnerExtent + ' ' + // End of arc X
-            // line up
-            'L' + link.circularPathData.rightFullExtent + ' ' + (link.circularPathData.targetY + link.circularPathData.rightSmallArcRadius) + ' ' +
-            // Arc around: Centre of arc X and  //Centre of arc Y
-            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightSmallArcRadius + ' 0 0 1 ' +
-            // End of arc X //End of arc Y
-            link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.targetY + ' ' + // End of arc X
-            // line to end
-            'L' + link.circularPathData.targetX + ' ' + link.circularPathData.targetY;
-      }
-
-      return pathString;
-}
-
 // return the distance between the link's target and source node,
 // in terms of the nodes' column
 function linkColumnDistance(link) {
@@ -373,6 +303,76 @@ function sortLinkTargetYDescending(link1, link2) {
   return link2.y1 - link1.y1;
 }
 
+// create a d path using the circularPathData
+function createCircularPathString(link) {
+      var pathString = '';
+
+      if (link.circularLinkType == 'top') {
+            pathString =
+            // start at the right of the source node
+            'M' + link.circularPathData.sourceX + ' ' + link.circularPathData.sourceY + ' ' +
+            // line right to buffer point
+            'L' + link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.sourceY + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftSmallArcRadius + ' 0 0 0 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.leftFullExtent + ' ' + (link.circularPathData.sourceY - link.circularPathData.leftSmallArcRadius) + ' ' + // End of arc X
+            // line up to buffer point
+            'L' + link.circularPathData.leftFullExtent + ' ' + link.circularPathData.verticalLeftInnerExtent + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftLargeArcRadius + ' 0 0 0 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' + // End of arc X
+            // line left to buffer point
+            'L' + link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightLargeArcRadius + ' 0 0 0 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.rightFullExtent + ' ' + link.circularPathData.verticalRightInnerExtent + ' ' + // End of arc X
+            // line down
+            'L' + link.circularPathData.rightFullExtent + ' ' + (link.circularPathData.targetY - link.circularPathData.rightSmallArcRadius) + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightSmallArcRadius + ' 0 0 0 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.targetY + ' ' + // End of arc X
+            // line to end
+            'L' + link.circularPathData.targetX + ' ' + link.circularPathData.targetY;
+      } else {
+            // bottom path
+            pathString =
+            // start at the right of the source node
+            'M' + link.circularPathData.sourceX + ' ' + link.circularPathData.sourceY + ' ' +
+            // line right to buffer point
+            'L' + link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.sourceY + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftSmallArcRadius + ' 0 0 1 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.leftFullExtent + ' ' + (link.circularPathData.sourceY + link.circularPathData.leftSmallArcRadius) + ' ' + // End of arc X
+            // line down to buffer point
+            'L' + link.circularPathData.leftFullExtent + ' ' + link.circularPathData.verticalLeftInnerExtent + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.leftLargeArcRadius + ' ' + link.circularPathData.leftLargeArcRadius + ' 0 0 1 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.leftInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' + // End of arc X
+            // line left to buffer point
+            'L' + link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.verticalFullExtent + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightLargeArcRadius + ' 0 0 1 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.rightFullExtent + ' ' + link.circularPathData.verticalRightInnerExtent + ' ' + // End of arc X
+            // line up
+            'L' + link.circularPathData.rightFullExtent + ' ' + (link.circularPathData.targetY + link.circularPathData.rightSmallArcRadius) + ' ' +
+            // Arc around: Centre of arc X and  //Centre of arc Y
+            'A' + link.circularPathData.rightLargeArcRadius + ' ' + link.circularPathData.rightSmallArcRadius + ' 0 0 1 ' +
+            // End of arc X //End of arc Y
+            link.circularPathData.rightInnerExtent + ' ' + link.circularPathData.targetY + ' ' + // End of arc X
+            // line to end
+            'L' + link.circularPathData.targetX + ' ' + link.circularPathData.targetY;
+      }
+
+      return pathString;
+}
+
 // sort ascending links by their target vertical position, y1
 function sortLinkTargetYAscending(link1, link2) {
   return link1.y1 - link2.y1;
@@ -384,7 +384,7 @@ function addCircularPathData(graph, circularLinkGap, y1, id, baseRadius, vertica
   var buffer = 5;
   //var verticalMargin = 25
 
-  var minY = min$1(graph.links, function (link) {
+  var minY = min(graph.links, function (link) {
     return link.source.y0;
   });
 
@@ -399,12 +399,12 @@ function addCircularPathData(graph, circularLinkGap, y1, id, baseRadius, vertica
   var topLinks = graph.links.filter(function (l) {
     return l.circularLinkType == 'top';
   });
-  topLinks = calcVerticalBuffer(topLinks, circularLinkGap, id);
+  /* topLinks = */calcVerticalBuffer(topLinks, circularLinkGap, id);
 
   var bottomLinks = graph.links.filter(function (l) {
     return l.circularLinkType == 'bottom';
   });
-  bottomLinks = calcVerticalBuffer(bottomLinks, circularLinkGap, id);
+  /* bottomLinks = */calcVerticalBuffer(bottomLinks, circularLinkGap, id);
 
   // add the base data for each link
   graph.links.forEach(function (link) {
@@ -514,22 +514,6 @@ function addCircularPathData(graph, circularLinkGap, y1, id, baseRadius, vertica
       link.path = normalPath(link);
     }
   });
-}
-
-// check if two nodes overlap
-function nodesOverlap(nodeA, nodeB) {
-  // test if nodeA top partially overlaps nodeB
-  if (nodeA.y0 > nodeB.y0 && nodeA.y0 < nodeB.y1) {
-    return true;
-  } else if (nodeA.y1 > nodeB.y0 && nodeA.y1 < nodeB.y1) {
-    // test if nodeA bottom partially overlaps nodeB
-    return true;
-  } else if (nodeA.y0 < nodeB.y0 && nodeA.y1 > nodeB.y1) {
-    // test if nodeA covers nodeB
-    return true;
-  } else {
-    return false;
-  }
 }
 
 // sort nodes' breadth (ie top to bottom in a column)
@@ -679,6 +663,22 @@ function adjustNodeHeight(node, dy, sankeyY0, sankeyY1) {
   return node;
 }
 
+// check if two nodes overlap
+function nodesOverlap(nodeA, nodeB) {
+  // test if nodeA top partially overlaps nodeB
+  if (nodeA.y0 > nodeB.y0 && nodeA.y0 < nodeB.y1) {
+    return true;
+  } else if (nodeA.y1 > nodeB.y0 && nodeA.y1 < nodeB.y1) {
+    // test if nodeA bottom partially overlaps nodeB
+    return true;
+  } else if (nodeA.y0 < nodeB.y0 && nodeA.y1 > nodeB.y1) {
+    // test if nodeA covers nodeB
+    return true;
+  } else {
+    return false;
+  }
+}
+
 // Move any nodes that overlap links which span 2+ columns
 function resolveNodeLinkOverlaps(graph, y0, y1, id) {
   graph.links.forEach(function (link) {
@@ -711,9 +711,11 @@ function resolveNodeLinkOverlaps(graph, y0, y1, id) {
             var linkY0AtColumn = py_t - link.width / 2;
             var linkY1AtColumn = py_t + link.width / 2;
 
+            var dy;
+
             // If top of link overlaps node, push node up
             if (linkY0AtColumn > node.y0 && linkY0AtColumn < node.y1) {
-              var dy = node.y1 - linkY0AtColumn + 10;
+              dy = node.y1 - linkY0AtColumn + 10;
               dy = node.circularLinkType == 'bottom' ? dy : -dy;
 
               node = adjustNodeHeight(node, dy, y0, y1);
@@ -730,7 +732,7 @@ function resolveNodeLinkOverlaps(graph, y0, y1, id) {
               });
             } else if (linkY1AtColumn > node.y0 && linkY1AtColumn < node.y1) {
               // If bottom of link overlaps node, push node down
-              var dy = linkY1AtColumn - node.y0 + 10;
+              dy = linkY1AtColumn - node.y0 + 10;
 
               node = adjustNodeHeight(node, dy, y0, y1);
 
@@ -746,7 +748,7 @@ function resolveNodeLinkOverlaps(graph, y0, y1, id) {
               });
             } else if (linkY0AtColumn < node.y0 && linkY1AtColumn > node.y1) {
               // if link completely overlaps node
-              var dy = linkY1AtColumn - node.y0 + 10;
+              dy = linkY1AtColumn - node.y0 + 10;
 
               node = adjustNodeHeight(node, dy, y0, y1);
 
@@ -780,6 +782,53 @@ function numberOfNonSelfLinkingCycles(node, id) {
   });
 
   return sourceCount + targetCount;
+}
+
+// Assign a circular link type (top or bottom), based on:
+// - if the source/target node already has circular links, then use the same type
+// - if not, choose the type with fewer links
+function selectCircularLinkTypes(inputGraph, id) {
+  var graph = cloneDeep(inputGraph);
+  var numberOfTops = 0;
+  var numberOfBottoms = 0;
+  graph.links.forEach(function (link) {
+    if (link.circular) {
+      // if either souce or target has type already use that
+      if (link.source.circularLinkType || link.target.circularLinkType) {
+        // default to source type if available
+        link.circularLinkType = link.source.circularLinkType ? link.source.circularLinkType : link.target.circularLinkType;
+      } else {
+        link.circularLinkType = numberOfTops < numberOfBottoms ? 'top' : 'bottom';
+      }
+
+      if (link.circularLinkType == 'top') {
+        numberOfTops = numberOfTops + 1;
+      } else {
+        numberOfBottoms = numberOfBottoms + 1;
+      }
+
+      graph.nodes.forEach(function (node) {
+        if (getNodeID(node, id) == getNodeID(link.source, id) || getNodeID(node, id) == getNodeID(link.target, id)) {
+          node.circularLinkType = link.circularLinkType;
+        }
+      });
+    }
+  });
+
+  //correct self-linking links to be same direction as node
+  graph.links.forEach(function (link) {
+    if (link.circular) {
+      //if both source and target node are same type, then link should have same type
+      if (link.source.circularLinkType == link.target.circularLinkType) {
+        link.circularLinkType = link.source.circularLinkType;
+      }
+      //if link is self-linking, then link should have same type as node
+      if (selfLinking(link, id)) {
+        link.circularLinkType = link.source.circularLinkType;
+      }
+    }
+  });
+  return graph;
 }
 
 // Given a node, find all links for which this is a source in the current 'known' graph
@@ -828,53 +877,6 @@ function createsCycle(originalSource, nodeToCheck, graph, id) {
 
   // Exhausted all links
   return false;
-}
-
-// Assign a circular link type (top or bottom), based on:
-// - if the source/target node already has circular links, then use the same type
-// - if not, choose the type with fewer links
-function selectCircularLinkTypes(inputGraph, id) {
-  var graph = cloneDeep(inputGraph);
-  var numberOfTops = 0;
-  var numberOfBottoms = 0;
-  graph.links.forEach(function (link) {
-    if (link.circular) {
-      // if either souce or target has type already use that
-      if (link.source.circularLinkType || link.target.circularLinkType) {
-        // default to source type if available
-        link.circularLinkType = link.source.circularLinkType ? link.source.circularLinkType : link.target.circularLinkType;
-      } else {
-        link.circularLinkType = numberOfTops < numberOfBottoms ? 'top' : 'bottom';
-      }
-
-      if (link.circularLinkType == 'top') {
-        numberOfTops = numberOfTops + 1;
-      } else {
-        numberOfBottoms = numberOfBottoms + 1;
-      }
-
-      graph.nodes.forEach(function (node) {
-        if (getNodeID(node, id) == getNodeID(link.source, id) || getNodeID(node, id) == getNodeID(link.target, id)) {
-          node.circularLinkType = link.circularLinkType;
-        }
-      });
-    }
-  });
-
-  //correct self-linking links to be same direction as node
-  graph.links.forEach(function (link) {
-    if (link.circular) {
-      //if both source and target node are same type, then link should have same type
-      if (link.source.circularLinkType == link.target.circularLinkType) {
-        link.circularLinkType = link.source.circularLinkType;
-      }
-      //if link is self-linking, then link should have same type as node
-      if (selfLinking(link, id)) {
-        link.circularLinkType = link.source.circularLinkType;
-      }
-    }
-  });
-  return graph;
 }
 
 // Identify circles in the link objects
@@ -992,6 +994,45 @@ function computeNodeDepths(inputGraph, align) {
     node.column = Math.floor(align.call(null, node, x));
   });
   return graph;
+}
+
+// For each column, check if nodes are overlapping, and if so, shift up/down
+function resolveCollisions(columns, y0, y1, py) {
+  columns.forEach(function (nodes) {
+    var node,
+        dy,
+        y = y0,
+        n = nodes.length,
+        i;
+
+    // Push any overlapping nodes down.
+    nodes.sort(ascendingBreadth);
+
+    for (i = 0; i < n; ++i) {
+      node = nodes[i];
+      dy = y - node.y0;
+
+      if (dy > 0) {
+        node.y0 += dy;
+        node.y1 += dy;
+      }
+      y = node.y1 + py;
+    }
+
+    // If the bottommost node goes outside the bounds, push it back up.
+    dy = y - py - y1;
+    if (dy > 0) {
+      y = node.y0 -= dy, node.y1 -= dy;
+
+      // Push any overlapping nodes back up.
+      for (i = n - 2; i >= 0; --i) {
+        node = nodes[i];
+        dy = node.y1 + py - y;
+        if (dy > 0) node.y0 -= dy, node.y1 -= dy;
+        y = node.y0;
+      }
+    }
+  });
 }
 
 // https://github.com/tomshanley/d3-sankeyCircular-circular
@@ -1188,7 +1229,7 @@ function sankeyCircular () {
         totalRightLinksWidth = 0,
         totalLeftLinksWidth = 0;
 
-    var maxColumn = max$1(graph.nodes, function (node) {
+    var maxColumn = max(graph.nodes, function (node) {
       return node.column;
     });
 
@@ -1226,7 +1267,7 @@ function sankeyCircular () {
 
   // Update the x0, y0, x1 and y1 for the sankeyCircular, to allow space for any circular links
   function scaleSankeySize(graph, margin) {
-    var maxColumn = max$1(graph.nodes, function (node) {
+    var maxColumn = max(graph.nodes, function (node) {
       return node.column;
     });
 
@@ -1261,11 +1302,11 @@ function sankeyCircular () {
     });
 
     initializeNodeBreadth(id);
-    resolveCollisions();
+    resolveCollisions(columns, y0, y1, py);
 
     for (var alpha = 1, n = iterations; n > 0; --n) {
       relaxLeftAndRight(alpha *= 0.99, id);
-      resolveCollisions();
+      resolveCollisions(columns, y0, y1, py);
     }
 
     function initializeNodeBreadth(id) {
@@ -1279,7 +1320,7 @@ function sankeyCircular () {
         py = padding;
       }
 
-      var ky = min$1(columns, function (nodes) {
+      var ky = min(columns, function (nodes) {
         return (y1 - y0 - (nodes.length - 1) * py) / sum(nodes, value);
       });
 
@@ -1342,20 +1383,21 @@ function sankeyCircular () {
     function relaxLeftAndRight(alpha, id) {
       var columnsLength = columns.length;
 
-      columns.forEach(function (nodes, i) {
+      columns.forEach(function (nodes) {
         var n = nodes.length;
         var depth = nodes[0].depth;
 
         nodes.forEach(function (node) {
           // check the node is not an orphan
+          var nodeHeight;
           if (node.sourceLinks.length || node.targetLinks.length) {
             if (node.partOfCycle && numberOfNonSelfLinkingCycles(node, id) > 0) ; else if (depth == 0 && n == 1) {
-              var nodeHeight = node.y1 - node.y0;
+              nodeHeight = node.y1 - node.y0;
 
               node.y0 = y1 / 2 - nodeHeight / 2;
               node.y1 = y1 / 2 + nodeHeight / 2;
             } else if (depth == columnsLength - 1 && n == 1) {
-              var nodeHeight = node.y1 - node.y0;
+              nodeHeight = node.y1 - node.y0;
 
               node.y0 = y1 / 2 - nodeHeight / 2;
               node.y1 = y1 / 2 + nodeHeight / 2;
@@ -1378,45 +1420,6 @@ function sankeyCircular () {
             }
           }
         });
-      });
-    }
-
-    // For each column, check if nodes are overlapping, and if so, shift up/down
-    function resolveCollisions() {
-      columns.forEach(function (nodes) {
-        var node,
-            dy,
-            y = y0,
-            n = nodes.length,
-            i;
-
-        // Push any overlapping nodes down.
-        nodes.sort(ascendingBreadth);
-
-        for (i = 0; i < n; ++i) {
-          node = nodes[i];
-          dy = y - node.y0;
-
-          if (dy > 0) {
-            node.y0 += dy;
-            node.y1 += dy;
-          }
-          y = node.y1 + py;
-        }
-
-        // If the bottommost node goes outside the bounds, push it back up.
-        dy = y - py - y1;
-        if (dy > 0) {
-y = node.y0 -= dy, node.y1 -= dy;
-
-          // Push any overlapping nodes back up.
-          for (i = n - 2; i >= 0; --i) {
-            node = nodes[i];
-            dy = node.y1 + py - y;
-            if (dy > 0) node.y0 -= dy, node.y1 -= dy;
-            y = node.y0;
-          }
-        }
       });
     }
   }
