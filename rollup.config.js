@@ -4,7 +4,7 @@ import babel from 'rollup-plugin-babel'
 import babelrc from 'babelrc-rollup'
 import pkg from './package.json'
 
-let external = Object.keys(pkg.dependencies).concat(['lodash/cloneDeep'])
+let external = Object.keys(pkg.dependencies)
 
 export default [
   // browser-friendly UMD build

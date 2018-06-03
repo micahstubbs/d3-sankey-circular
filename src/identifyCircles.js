@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from '../lib/cloneDeep'
 
 import createsCycle from './createsCycle'
 

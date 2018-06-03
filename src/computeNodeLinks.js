@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from '../lib/cloneDeep'
 import { map } from 'd3-collection'
 
 import find from './find'

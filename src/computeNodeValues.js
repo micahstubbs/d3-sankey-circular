@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from '../lib/cloneDeep'
 import { sum } from 'd3-array'
 
 // Compute the value (size) and cycleness of each node by summing the associated links.

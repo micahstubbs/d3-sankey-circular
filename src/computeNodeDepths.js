@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from '../lib/cloneDeep'
 
 // Iteratively assign the depth for each node.
 // Nodes are assigned the maximum depth of incoming neighbors plus one;
